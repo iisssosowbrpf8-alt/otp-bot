@@ -9,7 +9,6 @@ import requests
 import phonenumbers
 from phonenumbers import geocoder
 from datetime import datetime, timedelta
-import shutil
 import pycountry
 
 # ═══════════════════════════════════════════════════════════════
@@ -41,8 +40,6 @@ if not BOT_TOKEN:
     raise ValueError("BOT_TOKEN غير موجود!")
 if MAIN_ADMIN_ID == 0:
     raise ValueError("MAIN_ADMIN_ID غير موجود!")
-if not NUMBERPANEL_API_TOKEN:
-    raise ValueError("NUMBERPANEL_API_TOKEN غير موجود!")
 
 # ═══════════════════════════════════════════════════════════════
 # 📝 Logging
@@ -263,7 +260,7 @@ COUNTRIES_NAMES_AR = {
 }
 
 # ═══════════════════════════════════════════════════════════════
-# ✨ الخدمات المتاحة (واتساب بس)
+# ✨ الخدمات (واتساب بس)
 # ═══════════════════════════════════════════════════════════════
 DEFAULT_SERVICES = {
     "whatsapp": "واتساب",
@@ -858,291 +855,35 @@ def save_np_last_code(data):
                 json.dump(data, f, indent=2, ensure_ascii=False)
         except: pass
 
+# ═══════════════════════════════════════════════════════════════
+# ✅ جلب الأكواد من الـ Endpoint الرسمي
+# ═══════════════════════════════════════════════════════════════
 def np_get_latest_codes():
-    headers = {
-        "Authorization": f"Bearer {NUMBERPANEL_API_TOKEN}",
-        "Accept": "application/json",
-    }
-    for ep in ["/codes", "/sms", "/messages", "/latest", "/active", "/rentals", "/otp"]:
-        try:
-            r = requests.get(NUMBERPANEL_BASE + ep, headers=headers, timeout=8)
-            if r.status_code != 200:
-                continue
-            try: data = r.json()
-            except: continue
-            codes = None
-            if isinstance(data, list):
-                codes = data
-            elif isinstance(data, dict):
-                for k in ("codes", "data", "messages", "sms", "items", "rentals", "otp"):
-                    if k in data and isinstance(data[k], list):
-                        codes = data[k]
-                        break
-            if codes:
-                return codes
-        except: continue
-    return []
-
-# ═══════════════════════════════════════════════════════════════
-# 🔥 فحص الدول — مباشرة بدون كاش
-# ═══════════════════════════════════════════════════════════════
-def get_countries_from_api(service):
-    headers = {
-        "Authorization": f"Bearer {NUMBERPANEL_API_TOKEN}",
-        "Content-Type": "application/json",
-        "Accept": "application/json",
-    }
-    
-    endpoints = [
-        f"/countries/{service}",
-        f"/countries?service={service}",
-        f"/available_countries/{service}",
-        f"/available_countries?service={service}",
-        f"/services/{service}/countries",
-        f"/services/{service}",
-        f"/get_countries/{service}",
-        f"/get_countries?service={service}",
-        f"/country_list/{service}",
-        f"/all_countries/{service}",
-        f"/list_countries/{service}",
-        f"/countries/list/{service}",
-        f"/service/{service}/countries",
-        f"/service/{service}",
-        f"/available/{service}",
-        f"/available?service={service}",
-        f"/country/{service}",
-        f"/service_countries/{service}",
-        f"/get_available_countries/{service}",
-        f"/get_available_countries?service={service}",
-        "/countries",
-        "/available_countries",
-        "/get_countries",
-        "/services",
-        "/available",
-    ]
-    
-    for ep in endpoints:
-        try:
-            url = NUMBERPANEL_BASE + ep
-            r = requests.get(url, headers=headers, timeout=10)
-            if r.status_code != 200:
-                continue
-            try:
-                data = r.json()
-            except:
-                continue
-            
-            countries = []
-            
-            if isinstance(data, list):
-                for item in data:
-                    if isinstance(item, str):
-                        countries.append(item)
-                    elif isinstance(item, dict):
-                        code = item.get("code") or item.get("country") or item.get("iso") or item.get("country_code") or item.get("id")
-                        if code:
-                            countries.append(code)
-            
-            elif isinstance(data, dict):
-                for key in ("countries", "data", "items", "list", "available", "result", "results"):
-                    if key in data and isinstance(data[key], list):
-                        for item in data[key]:
-                            if isinstance(item, str):
-                                countries.append(item)
-                            elif isinstance(item, dict):
-                                code = item.get("code") or item.get("country") or item.get("iso") or item.get("country_code") or item.get("id")
-                                if code:
-                                    countries.append(code)
-                        break
-            
-            if countries:
-                valid = [c.upper() for c in countries if isinstance(c, str) and len(c) == 2 and c.isalpha()]
-                if valid:
-                    logger.info(f"✅ {service}: تم جلب {len(valid)} دولة من {ep}")
-                    return list(set(valid))
-        except Exception as e:
-            logger.debug(f"❌ {ep}: {e}")
-            continue
-    
-    return []
-
-def check_countries_for_service(service, max_workers=50):
     """
-    فحص الدول — 50 worker (سريع جداً)
+    جلب كل الأكواد من الـ Endpoint الرسمي لـ NumberPanel
+    https://numberpanel.tech/api/otp?count=200
     """
-    logger.info(f"🔍 محاولة جلب كل الدول لـ {service} من الموقع...")
-    all_countries_from_api = get_countries_from_api(service)
-    
-    available = []
-    
-    if all_countries_from_api:
-        logger.info(f"✅ {service}: تم العثور على {len(all_countries_from_api)} دولة من الـ API")
-        from concurrent.futures import ThreadPoolExecutor, as_completed
-        headers = {
-            "Authorization": f"Bearer {NUMBERPANEL_API_TOKEN}",
-            "Content-Type": "application/json",
-            "Accept": "application/json",
-        }
-        
-        def try_country(country):
-            try:
-                url = f"{NUMBERPANEL_BASE}/request_number"
-                r = requests.post(url, json={"country": country, "service": service},
-                                  headers=headers, timeout=8)
-                if r.status_code != 200:
-                    return (country, None)
-                try: data = r.json()
-                except: data = None
-                if data and isinstance(data, dict):
-                    if data.get("success") is False:
-                        return (country, None)
-                    number = (data.get("number") or data.get("phone") or
-                              data.get("num") or data.get("msisdn"))
-                    if number:
-                        return (country, number)
-                match = re.search(r'"number"\s*:\s*"([^"]+)"', r.text)
-                if match:
-                    return (country, match.group(1))
-                return (country, None)
-            except: return (country, None)
-        
-        with ThreadPoolExecutor(max_workers=max_workers) as executor:
-            futures = {executor.submit(try_country, c): c for c in all_countries_from_api}
-            for fut in as_completed(futures):
-                try:
-                    country, number = fut.result(timeout=10)
-                    if number:
-                        available.append((country, number))
-                        register_discovered_country(country)
-                except: pass
-    
-    if not available:
-        logger.info(f"⚠️ {service}: الطريقة القديمة (كل دول العالم بـ 50 worker)...")
-        from concurrent.futures import ThreadPoolExecutor, as_completed
-        headers = {
-            "Authorization": f"Bearer {NUMBERPANEL_API_TOKEN}",
-            "Content-Type": "application/json",
-            "Accept": "application/json",
-        }
-        
-        def try_country_old(country):
-            try:
-                url = f"{NUMBERPANEL_BASE}/request_number"
-                r = requests.post(url, json={"country": country, "service": service},
-                                  headers=headers, timeout=8)
-                if r.status_code != 200:
-                    return None
-                try: data = r.json()
-                except: data = None
-                if data and isinstance(data, dict):
-                    if data.get("success") is False:
-                        return None
-                    number = (data.get("number") or data.get("phone") or
-                              data.get("num") or data.get("msisdn"))
-                    if number:
-                        return (country, number)
-                match = re.search(r'"number"\s*:\s*"([^"]+)"', r.text)
-                if match:
-                    return (country, match.group(1))
-                return None
-            except: return None
-        
-        all_countries = get_all_test_countries()
-        logger.info(f"🌍 فحص {len(all_countries)} دولة بـ 50 worker...")
-        
-        with ThreadPoolExecutor(max_workers=max_workers) as executor:
-            futures = {executor.submit(try_country_old, c): c for c in all_countries}
-            for fut in as_completed(futures):
-                try:
-                    result = fut.result(timeout=10)
-                    if result:
-                        available.append(result)
-                        register_discovered_country(result[0])
-                except: pass
-    
-    logger.info(f"✅ {service}: {len(available)} دولة متاحة")
-    return available
-
-def request_number_from_country(service_key, country_code):
+    url = f"{NUMBERPANEL_BASE}/otp?count=200"
     try:
-        url = f"{NUMBERPANEL_BASE}/request_number"
-        headers = {
-            "Authorization": f"Bearer {NUMBERPANEL_API_TOKEN}",
-            "Content-Type": "application/json",
-            "Accept": "application/json",
-        }
-        r = requests.post(url, json={"country": country_code, "service": service_key},
-                          headers=headers, timeout=20)
-        r.encoding = 'utf-8'
+        r = requests.get(url, timeout=15)
         if r.status_code != 200:
-            return False, None
-        number = None
-        try:
-            data = r.json()
-            if isinstance(data, dict) and data.get("success") is not False:
-                number = (data.get("number") or data.get("phone") or
-                          data.get("num") or data.get("msisdn"))
-        except: pass
-        if not number:
-            match = re.search(r'"number"\s*:\s*"([^"]+)"', r.text)
-            if match:
-                number = match.group(1)
-        if number:
-            return True, number
+            logger.error(f"❌ API error: {r.status_code}")
+            return []
+        data = r.json()
+        if isinstance(data, list):
+            return data
+        elif isinstance(data, dict):
+            for key in ("data", "otp", "codes", "items"):
+                if key in data and isinstance(data[key], list):
+                    return data[key]
+        return []
     except Exception as e:
-        logger.error(f"Error: {e}")
-    return False, None
+        logger.error(f"❌ خطأ في الاتصال: {e}")
+        return []
 
-def build_number_success_message(service_key, country_code, number):
-    service_name = DEFAULT_SERVICES.get(service_key, service_key)
-    service_icon = get_service_icon(service_key)
-    flag = get_flag(country_code)
-    cname = get_country_name(country_code)
-    cleaned = clean_number(number)
-
-    text = (
-        f"✅ <b>تم استلام رقم {service_name}!</b>\n\n"
-        f"━━━━━━━━━━━━━━━━━━━━━\n"
-        f"📞 <b>الرقم:</b> <code>+{cleaned}</code>\n"
-        f"{flag} <b>الدولة:</b> {cname}\n"
-        f"{service_icon} <b>الخدمة:</b> {service_name}\n"
-        f"━━━━━━━━━━━━━━━━━━━━━\n\n"
-        f"🔔 سيصلك الكود هنا تلقائياً عند وصوله."
-    )
-
-    markup = InlineKeyboardMarkup(row_width=1)
-
-    try:
-        markup.add(InlineKeyboardButton(
-            text="📋 نسخ الرقم",
-            copy_text=CopyTextButton(text=f"+{cleaned}"),
-            style="success"
-        ))
-    except:
-        markup.add(InlineKeyboardButton(
-            "📋 نسخ الرقم",
-            callback_data=f"copy_num_{cleaned}",
-            style="success"
-        ))
-
-    markup.add(InlineKeyboardButton(
-        "📲 طلب رقم جديد",
-        callback_data=f"new_number_{service_key}_{country_code}",
-        style="success"
-    ))
-    markup.add(InlineKeyboardButton(
-        "🌍 رجوع للدول",
-        callback_data=f"service_{service_key}",
-        style="success"
-    ))
-    markup.add(InlineKeyboardButton(
-        "🔗 جروب البوت",
-        url=GROUP_LINK,
-        style="success"
-    ))
-
-    return text, markup
-
+# ═══════════════════════════════════════════════════════════════
+# 🔥 فحص الأكواد الجديدة وإرسالها للجروب فوراً (كل 0.5 ثانية)
+# ═══════════════════════════════════════════════════════════════
 def build_group_code_message(number, code_val, service, country, message=""):
     cleaned = clean_number(number)
     masked = mask_number_partial(cleaned)
@@ -1183,24 +924,29 @@ def build_group_code_message(number, code_val, service, country, message=""):
     return text, markup
 
 def np_check_new_code_loop():
-    logger.info("🚀 بدء فحص NumberPanel كل ثانية...")
-    time.sleep(5)
+    logger.info("🚀 بدء فحص NumberPanel (كل 0.5 ثانية) — فوري!")
+    time.sleep(3)
     while True:
         try:
-            if not NUMBERPANEL_API_TOKEN:
-                time.sleep(30)
-                continue
             codes_list = np_get_latest_codes()
             last_sent = load_np_last_code()
 
-            for item in codes_list[:10]:
-                if not isinstance(item, dict):
-                    continue
-                number = (item.get("number") or item.get("num") or item.get("phone") or "")
-                code_val = (item.get("code") or item.get("otp") or item.get("verification_code") or "")
-                message = (item.get("message") or item.get("sms") or "")
-                service = item.get("service") or item.get("app") or ""
-                country = item.get("country") or ""
+            for item in codes_list[:100]:  # آخر 100 كود
+                if not isinstance(item, (list, tuple)) or len(item) < 3:
+                    if isinstance(item, dict):
+                        number = item.get("number") or item.get("phone") or ""
+                        code_val = item.get("code") or item.get("otp") or ""
+                        message = item.get("message") or item.get("sms") or ""
+                        service = item.get("service") or item.get("app") or ""
+                        country = item.get("country") or ""
+                    else:
+                        continue
+                else:
+                    service = str(item[0]) if len(item) > 0 else ""
+                    number = str(item[1]) if len(item) > 1 else ""
+                    message = str(item[2]) if len(item) > 2 else ""
+                    code_val = str(item[3]) if len(item) > 3 else ""
+                    country = str(item[4]) if len(item) > 4 else ""
 
                 if not code_val and message:
                     code_val, _ = extract_from_message(message)
@@ -1208,11 +954,18 @@ def np_check_new_code_loop():
                     continue
 
                 cleaned_number = clean_number(number)
+                if not cleaned_number:
+                    continue
+
+                country_name, flag, region = detect_country_from_number(cleaned_number)
+                if not country:
+                    country = region
+
                 unique_key = f"{cleaned_number}|{code_val}"
                 if unique_key in last_sent:
                     continue
 
-                logger.info(f"🔔 كود جديد: {code_val} للرقم {cleaned_number}")
+                logger.info(f"🔔 كود جديد: {code_val} للرقم {cleaned_number} - {country}")
 
                 text, markup = build_group_code_message(
                     number=cleaned_number, code_val=code_val,
@@ -1238,8 +991,8 @@ def np_check_new_code_loop():
 
                 if sent:
                     last_sent[unique_key] = datetime.now().isoformat()
-                    if len(last_sent) > 500:
-                        for k in list(last_sent.keys())[:-500]:
+                    if len(last_sent) > 1000:
+                        for k in list(last_sent.keys())[:-1000]:
                             del last_sent[k]
                     save_np_last_code(last_sent)
                     update_my_number_last_code(cleaned_number, code_val)
@@ -1255,52 +1008,60 @@ def np_check_new_code_loop():
                         save_collected_codes()
         except Exception as e:
             logger.error(f"خطأ: {e}")
-        time.sleep(1)
+        time.sleep(0.5)  # ✅ كل نص ثانية
 
 # ═══════════════════════════════════════════════════════════════
-# ⚡ التحديث السريع (كل 30 ثانية) — واتساب بس
+# ⚡ المحدّث السريع (كل 30 ثانية) — يجمع الدول من الأكواد
 # ═══════════════════════════════════════════════════════════════
 def cache_updater_loop():
     """
-    ⚡ كل 30 ثانية: يفحص واتساب، ويضيف كل دولة جديدة للكاش المحفوظ.
-    - مش بيمسح حاجة — بس بيضيف.
-    - 50 worker عشان يكون سريع.
-    - بيبدأ فوراً بدون استراحة.
+    كل 30 ثانية: يجيب الأكواد من الموقع، يستخرج منها الدول الجديدة،
+    ويضيفها للكاش. حفظ تراكمي (مش بيمسح حاجة).
     """
-    logger.info("⚡ بدء المحدّث السريع (كل 30 ثانية) — واتساب...")
+    logger.info("⚡ بدء المحدّث السريع — يجمع الدول من الأكواد الرسمية...")
+    time.sleep(10)
 
     while True:
         try:
             logger.info("=" * 50)
             logger.info("🔄 دورة تحديث جديدة...")
 
-            with available_countries_lock:
-                before_count = len(available_countries_cache.get("whatsapp", []))
+            codes = np_get_latest_codes()
 
-            # ═══ 1. الفحص المباشر من الموقع (50 worker) ═══
-            new_results = check_countries_for_service("whatsapp", max_workers=50)
-
-            if new_results:
+            if codes:
+                added_now = 0
                 with available_countries_lock:
-                    # ═══ 2. الدمج مع الكاش المحفوظ (من غير مسح) ═══
                     existing = {}
                     for item in available_countries_cache.get("whatsapp", []):
                         c = item.get("country")
                         if c:
                             existing[c] = item
 
-                    # ضيف الجديد
-                    added_now = 0
-                    for country_code, number in new_results:
-                        if country_code not in existing:
-                            added_now += 1
-                        existing[country_code] = {
-                            "country": country_code,
-                            "number": number,
-                            "timestamp": time.time()
-                        }
+                    for entry in codes:
+                        try:
+                            if isinstance(entry, (list, tuple)) and len(entry) >= 2:
+                                service = str(entry[0]).lower()
+                                num = str(entry[1])
+                            elif isinstance(entry, dict):
+                                service = str(entry.get("service") or entry.get("app") or "").lower()
+                                num = str(entry.get("number") or entry.get("phone") or "")
+                            else:
+                                continue
 
-                    # احفظ الكل
+                            if "whatsapp" not in service and "wa" not in service:
+                                continue
+
+                            country_name, flag, region = detect_country_from_number(num)
+                            if region and region != "UN" and region not in existing:
+                                existing[region] = {
+                                    "country": region,
+                                    "number": num,
+                                    "timestamp": time.time()
+                                }
+                                added_now += 1
+                                logger.info(f"🆕 دولة جديدة: {region} ({country_name})")
+                        except: continue
+
                     available_countries_cache["whatsapp"] = list(existing.values())
                     total_saved = len(available_countries_cache["whatsapp"])
 
@@ -1313,7 +1074,7 @@ def cache_updater_loop():
 
                 logger.info(f"📌 الدول: {sorted(existing.keys())}")
             else:
-                logger.warning("⚠️ الفحص رجع 0 دولة — الكاش القديم هيفضل زي ما هو")
+                logger.warning("⚠️ لا توجد أكواد جديدة")
 
             logger.info("⏰ الاستراحة 30 ثانية...")
             logger.info("=" * 50)
@@ -1350,7 +1111,6 @@ def get_main_reply_keyboard(user_id=None):
     return markup
 
 def get_services_menu():
-    """قائمة الخدمات — واتساب بس"""
     markup = InlineKeyboardMarkup(row_width=1)
     markup.add(InlineKeyboardButton("📞 واتساب", callback_data="service_whatsapp", style="success"))
     return markup
@@ -1669,7 +1429,7 @@ def handle_messages(msg):
         return
 
 # ═══════════════════════════════════════════════════════════════
-# 🔥 اختيار خدمة (واتساب بس) — من الكاش المحفوظ
+# 🔥 اختيار خدمة (واتساب بس)
 # ═══════════════════════════════════════════════════════════════
 @bot.callback_query_handler(func=lambda call: call.data.startswith("service_"))
 def service_selected(call):
@@ -1677,7 +1437,6 @@ def service_selected(call):
     service_name = DEFAULT_SERVICES.get(service_key, service_key)
     service_icon = get_service_icon(service_key)
 
-    # ═══ استخدم الكاش المحفوظ فوراً ═══
     with available_countries_lock:
         cached = available_countries_cache.get(service_key, [])
 
@@ -1685,25 +1444,18 @@ def service_selected(call):
         bot.answer_callback_query(call.id, f"⚡ {len(cached)} دولة")
         available = [(item["country"], item["number"]) for item in cached]
     else:
-        # لو الكاش فاضي، اعمل فحص مباشر
         bot.answer_callback_query(call.id, "🔄 جاري الفحص الأول...")
         bot.edit_message_text(
             f"{service_icon} <b>جاري البحث عن الدول المتاحة لـ {service_name}...</b>\n\n"
             f"⏳ <i>قد يستغرق 5-15 ثانية</i>",
             call.message.chat.id, call.message.message_id, parse_mode="HTML"
         )
-        available = check_countries_for_service(service_key)
-        if available:
-            now = time.time()
-            cache_items = [{"country": c, "number": n, "timestamp": now} for c, n in available]
-            with available_countries_lock:
-                available_countries_cache[service_key] = cache_items
-            save_available_cache()
+        available = []
 
     if not available:
         text = (
             f"❌ <b>{service_name} غير متاح حالياً</b>\n\n"
-            f"⚠️ جاري المحاولة في الخلفية، هتظهر الدول قريباً"
+            f"⚠️ جاري جمع الدول تلقائياً، هتظهر قريباً"
         )
         markup = InlineKeyboardMarkup(row_width=1)
         markup.add(InlineKeyboardButton("🔄 حاول تاني", callback_data=f"service_{service_key}", style="success"))
@@ -1744,41 +1496,115 @@ def pick_country_cb(call):
     cname = get_country_name(country_code)
 
     bot.edit_message_text(
-        f"{service_icon} <b>جاري طلب رقم {service_name} من {cname}...</b>",
+        f"{service_icon} <b>جاري البحث عن رقم {service_name} من {cname}...</b>\n\n"
+        f"📥 في انتظار وصول الرقم من الموقع...",
         call.message.chat.id, call.message.message_id, parse_mode="HTML"
     )
 
-    success, number = request_number_from_country(service_key, country_code)
+    country_code_clean = country_code
+    timeout = 60
+    start = time.time()
+    found_number = None
 
-    if success and number:
-        cleaned = clean_number(number)
-        if cleaned and len(cleaned) >= 8:
-            register_number_owner(cleaned, user_id,
-                                  call.from_user.username or "",
-                                  call.from_user.first_name or "مستخدم",
-                                  service_key, country_code)
-            add_my_number(cleaned, label=f"{service_key} - {country_code}", added_by=user_id)
+    while time.time() - start < timeout:
+        codes = np_get_latest_codes()
+        for entry in codes:
+            try:
+                if isinstance(entry, (list, tuple)) and len(entry) >= 2:
+                    service = str(entry[0]).lower()
+                    num = str(entry[1])
+                elif isinstance(entry, dict):
+                    service = str(entry.get("service") or entry.get("app") or "").lower()
+                    num = str(entry.get("number") or entry.get("phone") or "")
+                else:
+                    continue
 
-            text, markup = build_number_success_message(service_key, country_code, cleaned)
-            bot.edit_message_text(text, call.message.chat.id, call.message.message_id,
-                                  parse_mode="HTML", reply_markup=markup)
-            return
+                if "whatsapp" not in service and "wa" not in service:
+                    continue
 
-    text = f"❌ <b>فشل الحصول على رقم {service_name}</b>\n\n💡 جرب دولة تانية"
+                country_name, flag, region = detect_country_from_number(num)
+                if region == country_code_clean:
+                    found_number = num
+                    break
+            except: continue
+        if found_number:
+            break
+        time.sleep(3)
+
+    if found_number:
+        cleaned = clean_number(found_number)
+        register_number_owner(cleaned, user_id,
+                              call.from_user.username or "",
+                              call.from_user.first_name or "مستخدم",
+                              service_key, country_code)
+        add_my_number(cleaned, label=f"{service_key} - {country_code}", added_by=user_id)
+
+        text, markup = build_number_success_message(service_key, country_code, cleaned)
+        bot.edit_message_text(text, call.message.chat.id, call.message.message_id,
+                              parse_mode="HTML", reply_markup=markup)
+        return
+
+    text = f"❌ <b>لا يوجد رقم {service_name} من {cname} حالياً</b>\n\n💡 جرب دولة تانية"
     markup = InlineKeyboardMarkup(row_width=1)
     markup.add(InlineKeyboardButton("🔄 جرب تاني", callback_data=f"service_{service_key}", style="success"))
     markup.add(InlineKeyboardButton("🔗 جروب البوت", url=GROUP_LINK, style="success"))
     bot.edit_message_text(text, call.message.chat.id, call.message.message_id,
                           parse_mode="HTML", reply_markup=markup)
 
+def build_number_success_message(service_key, country_code, number):
+    service_name = DEFAULT_SERVICES.get(service_key, service_key)
+    service_icon = get_service_icon(service_key)
+    flag = get_flag(country_code)
+    cname = get_country_name(country_code)
+    cleaned = clean_number(number)
+
+    text = (
+        f"✅ <b>تم استلام رقم {service_name}!</b>\n\n"
+        f"━━━━━━━━━━━━━━━━━━━━━\n"
+        f"📞 <b>الرقم:</b> <code>+{cleaned}</code>\n"
+        f"{flag} <b>الدولة:</b> {cname}\n"
+        f"{service_icon} <b>الخدمة:</b> {service_name}\n"
+        f"━━━━━━━━━━━━━━━━━━━━━\n\n"
+        f"🔔 سيصلك الكود هنا تلقائياً عند وصوله."
+    )
+
+    markup = InlineKeyboardMarkup(row_width=1)
+
+    try:
+        markup.add(InlineKeyboardButton(
+            text="📋 نسخ الرقم",
+            copy_text=CopyTextButton(text=f"+{cleaned}"),
+            style="success"
+        ))
+    except:
+        markup.add(InlineKeyboardButton(
+            "📋 نسخ الرقم",
+            callback_data=f"copy_num_{cleaned}",
+            style="success"
+        ))
+
+    markup.add(InlineKeyboardButton(
+        "📲 طلب رقم جديد",
+        callback_data=f"new_number_{service_key}_{country_code}",
+        style="success"
+    ))
+    markup.add(InlineKeyboardButton(
+        "🌍 رجوع للدول",
+        callback_data=f"service_{service_key}",
+        style="success"
+    ))
+    markup.add(InlineKeyboardButton(
+        "🔗 جروب البوت",
+        url=GROUP_LINK,
+        style="success"
+    ))
+
+    return text, markup
+
 @bot.callback_query_handler(func=lambda call: call.data.startswith("new_number_"))
 def new_number_cb(call):
-    user_id = call.from_user.id
     parts = call.data.replace("new_number_", "").split("_", 1)
-    service_key = parts[0]
-    country_code = parts[1] if len(parts) > 1 else None
-
-    if not country_code:
+    if len(parts) < 2:
         bot.edit_message_text(
             "🎯 <b>اختر الخدمة:</b>",
             call.message.chat.id, call.message.message_id,
@@ -1887,7 +1713,6 @@ def owner_known_countries_cb(call):
 
 @bot.callback_query_handler(func=lambda call: call.data == "owner_wa_countries")
 def owner_wa_countries_cb(call):
-    """عرض دول واتساب المحفوظة في الكاش"""
     if call.from_user.id != MAIN_ADMIN_ID: return
     with available_countries_lock:
         wa_list = available_countries_cache.get("whatsapp", [])
@@ -2105,14 +1930,11 @@ if __name__ == "__main__":
     load_available_cache()
     logger.info("🚀 بدء التشغيل...")
 
-    # ⚡ محدّث الكاش السريع (كل 30 ثانية) — بيبدأ فوراً
     Thread(target=cache_updater_loop, daemon=True).start()
     logger.info("⚡ محدّث الكاش السريع شغال (كل 30 ثانية)")
 
-    # ═══ فحص الأكواد الجديدة ═══
-    if NUMBERPANEL_API_TOKEN:
-        Thread(target=np_check_new_code_loop, daemon=True).start()
-        logger.info("✅ فحص NumberPanel كل ثانية")
+    Thread(target=np_check_new_code_loop, daemon=True).start()
+    logger.info("✅ فحص الأكواد فوري (كل 0.5 ثانية)")
 
     try:
         requests.get(f"https://api.telegram.org/bot{BOT_TOKEN}/deleteWebhook?drop_pending_updates=true", timeout=10)
