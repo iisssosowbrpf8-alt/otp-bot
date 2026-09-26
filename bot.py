@@ -794,7 +794,6 @@ def get_countries_from_api(service):
         "Accept": "application/json",
     }
     
-    # قائمة الـ Endpoints المحتملة لجلب الدول
     endpoints = [
         f"/countries/{service}",
         f"/countries?service={service}",
@@ -823,10 +822,8 @@ def get_countries_from_api(service):
             except:
                 continue
             
-            # محاولة استخراج قائمة الدول من أي شكل للرد
             countries = []
             
-            # شكل 1: list مباشر
             if isinstance(data, list):
                 for item in data:
                     if isinstance(item, str):
@@ -836,7 +833,6 @@ def get_countries_from_api(service):
                         if code:
                             countries.append(code)
             
-            # شكل 2: dict فيه قائمة
             elif isinstance(data, dict):
                 for key in ("countries", "data", "items", "list", "available"):
                     if key in data and isinstance(data[key], list):
@@ -850,7 +846,6 @@ def get_countries_from_api(service):
                         break
             
             if countries:
-                # فلترة الأكواد الصحيحة (حرفين)
                 valid = [c.upper() for c in countries if isinstance(c, str) and len(c) == 2 and c.isalpha()]
                 if valid:
                     logger.info(f"✅ {service}: تم جلب {len(valid)} دولة من {ep}")
@@ -885,7 +880,6 @@ def check_countries_for_service(service, max_workers=10, force_refresh=False):
     
     if all_countries_from_api:
         logger.info(f"✅ {service}: تم العثور على {len(all_countries_from_api)} دولة من الـ API")
-        # جرب كل دولة من اللي رجعهم الموقع
         from concurrent.futures import ThreadPoolExecutor, as_completed
         headers = {
             "Authorization": f"Bearer {NUMBERPANEL_API_TOKEN}",
@@ -1582,7 +1576,7 @@ def handle_messages(msg):
         return
 
 # ═══════════════════════════════════════════════════════════════
-# 🔥 اختيار خدمة (مع كاش فوري)
+# 🔥 اختيار خدمة — ✅ التعديل الجوهري هنا يا خالد
 # ═══════════════════════════════════════════════════════════════
 @bot.callback_query_handler(func=lambda call: call.data.startswith("service_"))
 def service_selected(call):
@@ -1590,20 +1584,34 @@ def service_selected(call):
     service_name = DEFAULT_SERVICES.get(service_key, service_key)
     service_icon = get_service_icon(service_key)
 
+    # ═══════════════════════════════════════════════════════════════
+    # ✅ التعديل الجوهري: التحقق من الكاش أولاً
+    # لو الكاش موجود ومش قديم (أقل من ساعة)، نستخدمه فوراً
+    # ومنلمسش باقي الخدمات في الكاش
+    # ═══════════════════════════════════════════════════════════════
+    cached_data = []
+    cache_is_fresh = False
     with available_countries_lock:
         cached = available_countries_cache.get(service_key, [])
-        has_cache = bool(cached) and (time.time() - cached[0].get("timestamp", 0)) < 3600
-
-    if has_cache:
-        bot.answer_callback_query(call.id, f"⚡ {len(cached)} دولة")
+        if cached:
+            age = time.time() - cached[0].get("timestamp", 0)
+            if age < 3600:
+                cache_is_fresh = True
+                cached_data = [(item["country"], item["number"]) for item in cached]
+    
+    if cache_is_fresh and cached_data:
+        # ✅ الكاش fresh: استخدمه فوراً من غير ما نلمس باقي الخدمات
+        bot.answer_callback_query(call.id, f"⚡ {len(cached_data)} دولة")
+        available = cached_data
     else:
+        # ⚠️ مفيش كاش أو قديم: نادِ الـ API (بس نحدّث الخدمة دي بس)
+        bot.answer_callback_query(call.id, "🔄 جاري التحديث...")
         bot.edit_message_text(
             f"{service_icon} <b>جاري البحث عن الدول المتاحة لـ {service_name}...</b>\n\n"
             f"⏳ <i>قد يستغرق 5-10 ثواني</i>",
             call.message.chat.id, call.message.message_id, parse_mode="HTML"
         )
-
-    available = check_countries_for_service(service_key)
+        available = check_countries_for_service(service_key, force_refresh=True)
 
     if not available:
         text = (
@@ -1928,7 +1936,7 @@ def owner_cancel_cache_cb(call):
     Thread(target=do_cancel, daemon=True).start()
 
 # ═══════════════════════════════════════════════════════════════
-# 🔍 فحص الدول الحالي (جديد)
+# 🔍 فحص الدول الحالي
 # ═══════════════════════════════════════════════════════════════
 @bot.callback_query_handler(func=lambda call: call.data == "owner_check_cache")
 def owner_check_cache_cb(call):
