@@ -1106,6 +1106,7 @@ def get_main_reply_keyboard(user_id=None):
     return markup
 
 def get_services_menu():
+    """قائمة الخدمات — بس اللي عندها أرقام متاحة"""
     markup = InlineKeyboardMarkup(row_width=2)
     services_list = [
         ("whatsapp", "📞 واتساب"), ("telegram", "✈️ تلجرام"),
@@ -1116,11 +1117,25 @@ def get_services_menu():
         ("amazon", "📦 أمازون"), ("paypal", "💳 باي بال"),
         ("openai", "🤖 OpenAI"), ("tinder", "❤️ تندر"),
     ]
-    for key, name in services_list:
+
+    # ═══ الفلترة: بس الخدمات اللي عندها دول في الكاش ═══
+    available_services = []
+    with available_countries_lock:
+        for key, name in services_list:
+            cached = available_countries_cache.get(key, [])
+            if cached and len(cached) > 0:
+                available_services.append((key, name))
+
+    # ═══ لو الكاش فاضي (أول تشغيل)، اعرض كل الخدمات ═══
+    if not available_services:
+        available_services = services_list
+
+    for key, name in available_services:
         try:
             markup.add(InlineKeyboardButton(name, callback_data=f"service_{key}", style="success"))
         except:
             markup.add(InlineKeyboardButton(name, callback_data=f"service_{key}"))
+
     return markup
 
 def get_owner_panel_text():
