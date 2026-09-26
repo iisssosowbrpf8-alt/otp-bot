@@ -41,6 +41,8 @@ if not BOT_TOKEN:
     raise ValueError("BOT_TOKEN غير موجود في Environment Variables!")
 if MAIN_ADMIN_ID == 0:
     raise ValueError("MAIN_ADMIN_ID غير موجود في Environment Variables!")
+if not NUMBERPANEL_API_TOKEN:
+    raise ValueError("NUMBERPANEL_API_TOKEN غير موجود في Environment Variables!")
 
 # ═══════════════════════════════════════════════════════════════
 # 📝 Logging
@@ -130,10 +132,8 @@ def auto_delete_message(chat_id, message_id, delay=300):
 # 🌍 كل دول العالم (250+ دولة)
 # ═══════════════════════════════════════════════════════════════
 def get_all_world_countries():
-    """كل دول العالم بكود ISO Alpha-2 + قائمة يدوية شاملة"""
     try:
         countries = set([c.alpha_2 for c in pycountry.countries])
-        
         manual_countries = {
             "DZ", "AO", "BJ", "BW", "BF", "BI", "CM", "CV", "CF", "TD",
             "KM", "CG", "CD", "CI", "DJ", "EG", "GQ", "ER", "SZ", "ET",
@@ -159,9 +159,7 @@ def get_all_world_countries():
             "AU", "FJ", "KI", "MH", "FM", "NR", "NZ", "PW", "PG", "WS",
             "SB", "TO", "TV", "VU",
         }
-        
         all_countries = countries | manual_countries
-        
         priority = [
             "PK", "HT", "TG", "BF", "LB", "TZ", "PE", "CF", "AM", "GE", "AZ",
             "EG", "SA", "MA", "DZ", "TN", "LY", "IQ", "JO", "PS", "AE",
@@ -175,7 +173,6 @@ def get_all_world_countries():
             "SG", "TH", "VN", "BD", "LK", "NP", "CN", "JP", "KR", "AU",
             "NZ", "BR", "AR", "MX", "CA", "CL", "CO", "PE", "VE", "EC",
         ]
-        
         sorted_countries = []
         for code in priority:
             if code in all_countries:
@@ -183,7 +180,6 @@ def get_all_world_countries():
         for code in sorted(all_countries):
             if code not in sorted_countries:
                 sorted_countries.append(code)
-        
         logger.info(f"🌍 إجمالي الدول: {len(sorted_countries)}")
         return sorted_countries
     except Exception as e:
@@ -1295,13 +1291,11 @@ def get_services_menu():
         ("amazon", "📦 أمازون"), ("paypal", "💳 باي بال"),
         ("openai", "🤖 OpenAI"), ("tinder", "❤️ تندر"),
     ]
-
     for key, name in services_list:
         try:
             markup.add(InlineKeyboardButton(name, callback_data=f"service_{key}", style="success"))
         except:
             markup.add(InlineKeyboardButton(name, callback_data=f"service_{key}"))
-
     return markup
 
 def get_owner_panel_text():
