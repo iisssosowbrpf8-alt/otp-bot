@@ -268,7 +268,6 @@ COUNTRIES_NAMES_AR = {
 DEFAULT_SERVICES = {
     "whatsapp": "واتساب",
 }
-# ═══════════════════════════════════════════════════════════════
 
 # ═══════════════════════════════════════════════════════════════
 # 🌍 الدول المكتشفة
@@ -967,7 +966,10 @@ def get_countries_from_api(service):
     
     return []
 
-def check_countries_for_service(service, max_workers=30):
+def check_countries_for_service(service, max_workers=50):
+    """
+    فحص الدول — 50 worker (سريع جداً)
+    """
     logger.info(f"🔍 محاولة جلب كل الدول لـ {service} من الموقع...")
     all_countries_from_api = get_countries_from_api(service)
     
@@ -1015,7 +1017,7 @@ def check_countries_for_service(service, max_workers=30):
                 except: pass
     
     if not available:
-        logger.info(f"⚠️ {service}: الطريقة القديمة (كل دول العالم)...")
+        logger.info(f"⚠️ {service}: الطريقة القديمة (كل دول العالم بـ 50 worker)...")
         from concurrent.futures import ThreadPoolExecutor, as_completed
         headers = {
             "Authorization": f"Bearer {NUMBERPANEL_API_TOKEN}",
@@ -1046,7 +1048,7 @@ def check_countries_for_service(service, max_workers=30):
             except: return None
         
         all_countries = get_all_test_countries()
-        logger.info(f"🌍 فحص {len(all_countries)} دولة بـ 30 worker...")
+        logger.info(f"🌍 فحص {len(all_countries)} دولة بـ 50 worker...")
         
         with ThreadPoolExecutor(max_workers=max_workers) as executor:
             futures = {executor.submit(try_country_old, c): c for c in all_countries}
@@ -1256,23 +1258,27 @@ def np_check_new_code_loop():
         time.sleep(1)
 
 # ═══════════════════════════════════════════════════════════════
-# 🔥 التحديث التلقائي (كل ساعة) — واتساب بس
+# ⚡ التحديث السريع (كل 30 ثانية) — واتساب بس
 # ═══════════════════════════════════════════════════════════════
 def cache_updater_loop():
     """
-    كل ساعة: يفحص واتساب، ويضيف كل دولة جديدة للكاش المحفوظ.
-    مش بيمسح حاجة — بس بيضيف.
+    ⚡ كل 30 ثانية: يفحص واتساب، ويضيف كل دولة جديدة للكاش المحفوظ.
+    - مش بيمسح حاجة — بس بيضيف.
+    - 50 worker عشان يكون سريع.
+    - بيبدأ فوراً بدون استراحة.
     """
-    logger.info("🔄 بدء محدّث الكاش التلقائي (واتساب بس)...")
-    time.sleep(30)  # استنى البوت يقوم
+    logger.info("⚡ بدء المحدّث السريع (كل 30 ثانية) — واتساب...")
 
     while True:
         try:
             logger.info("=" * 50)
-            logger.info("🔄 بدء دورة تحديث الكاش (واتساب)...")
+            logger.info("🔄 دورة تحديث جديدة...")
 
-            # ═══ 1. الفحص المباشر من الموقع ═══
-            new_results = check_countries_for_service("whatsapp", max_workers=15)
+            with available_countries_lock:
+                before_count = len(available_countries_cache.get("whatsapp", []))
+
+            # ═══ 1. الفحص المباشر من الموقع (50 worker) ═══
+            new_results = check_countries_for_service("whatsapp", max_workers=50)
 
             if new_results:
                 with available_countries_lock:
@@ -1284,7 +1290,10 @@ def cache_updater_loop():
                             existing[c] = item
 
                     # ضيف الجديد
+                    added_now = 0
                     for country_code, number in new_results:
+                        if country_code not in existing:
+                            added_now += 1
                         existing[country_code] = {
                             "country": country_code,
                             "number": number,
@@ -1296,18 +1305,23 @@ def cache_updater_loop():
                     total_saved = len(available_countries_cache["whatsapp"])
 
                 save_available_cache()
-                logger.info(f"✅ تم التحديث — إجمالي الدول المحفوظة: {total_saved}")
+
+                if added_now > 0:
+                    logger.info(f"🎉 تمت إضافة {added_now} دولة جديدة! إجمالي: {total_saved}")
+                else:
+                    logger.info(f"✅ لا جديد — إجمالي الدول المحفوظة: {total_saved}")
+
                 logger.info(f"📌 الدول: {sorted(existing.keys())}")
             else:
                 logger.warning("⚠️ الفحص رجع 0 دولة — الكاش القديم هيفضل زي ما هو")
 
-            logger.info("⏰ الاستراحة ساعة...")
+            logger.info("⏰ الاستراحة 30 ثانية...")
             logger.info("=" * 50)
-            time.sleep(3600)
+            time.sleep(30)
 
         except Exception as e:
-            logger.error(f"❌ خطأ في محدّث الكاش: {e}")
-            time.sleep(300)
+            logger.error(f"❌ خطأ في المحدّث السريع: {e}")
+            time.sleep(30)
 
 # ═══════════════════════════════════════════════════════════════
 # 📲 الأزرار الرئيسية
@@ -1771,7 +1785,6 @@ def new_number_cb(call):
             parse_mode="HTML", reply_markup=get_services_menu()
         )
         return
-    # نفس منطق pick_country
     pick_country_cb(call)
 
 @bot.callback_query_handler(func=lambda call: call.data.startswith("copy_num_"))
@@ -2092,9 +2105,9 @@ if __name__ == "__main__":
     load_available_cache()
     logger.info("🚀 بدء التشغيل...")
 
-    # ═══ محدّث الكاش التلقائي (كل ساعة) ═══
+    # ⚡ محدّث الكاش السريع (كل 30 ثانية) — بيبدأ فوراً
     Thread(target=cache_updater_loop, daemon=True).start()
-    logger.info("✅ محدّث الكاش التلقائي شغال (كل ساعة)")
+    logger.info("⚡ محدّث الكاش السريع شغال (كل 30 ثانية)")
 
     # ═══ فحص الأكواد الجديدة ═══
     if NUMBERPANEL_API_TOKEN:
