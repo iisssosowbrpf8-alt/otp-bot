@@ -784,10 +784,88 @@ def np_get_latest_codes():
 # ═══════════════════════════════════════════════════════════════
 # 🔥 فحص الدول (مع كاش)
 # ═══════════════════════════════════════════════════════════════
+def get_countries_from_api(service):
+    """
+    ✅ محاولة جلب كل الدول من الموقع مرة واحدة (Endpoints محتملة)
+    """
+    headers = {
+        "Authorization": f"Bearer {NUMBERPANEL_API_TOKEN}",
+        "Content-Type": "application/json",
+        "Accept": "application/json",
+    }
+    
+    # قائمة الـ Endpoints المحتملة لجلب الدول
+    endpoints = [
+        f"/countries/{service}",
+        f"/countries?service={service}",
+        f"/available_countries/{service}",
+        f"/available_countries?service={service}",
+        f"/services/{service}/countries",
+        f"/services/{service}",
+        f"/get_countries/{service}",
+        f"/get_countries?service={service}",
+        f"/country_list/{service}",
+        f"/all_countries/{service}",
+        "/countries",
+        "/available_countries",
+        "/get_countries",
+        "/services",
+    ]
+    
+    for ep in endpoints:
+        try:
+            url = NUMBERPANEL_BASE + ep
+            r = requests.get(url, headers=headers, timeout=10)
+            if r.status_code != 200:
+                continue
+            try:
+                data = r.json()
+            except:
+                continue
+            
+            # محاولة استخراج قائمة الدول من أي شكل للرد
+            countries = []
+            
+            # شكل 1: list مباشر
+            if isinstance(data, list):
+                for item in data:
+                    if isinstance(item, str):
+                        countries.append(item)
+                    elif isinstance(item, dict):
+                        code = item.get("code") or item.get("country") or item.get("iso") or item.get("country_code")
+                        if code:
+                            countries.append(code)
+            
+            # شكل 2: dict فيه قائمة
+            elif isinstance(data, dict):
+                for key in ("countries", "data", "items", "list", "available"):
+                    if key in data and isinstance(data[key], list):
+                        for item in data[key]:
+                            if isinstance(item, str):
+                                countries.append(item)
+                            elif isinstance(item, dict):
+                                code = item.get("code") or item.get("country") or item.get("iso") or item.get("country_code")
+                                if code:
+                                    countries.append(code)
+                        break
+            
+            if countries:
+                # فلترة الأكواد الصحيحة (حرفين)
+                valid = [c.upper() for c in countries if isinstance(c, str) and len(c) == 2 and c.isalpha()]
+                if valid:
+                    logger.info(f"✅ {service}: تم جلب {len(valid)} دولة من {ep}")
+                    return list(set(valid))
+        except Exception as e:
+            logger.debug(f"❌ {ep}: {e}")
+            continue
+    
+    return []
+
 def check_countries_for_service(service, max_workers=10, force_refresh=False):
     """
-    فحص الدول المتاحة — مع كاش ساعة.
-    لو في الكاش ومش قديم، يرجعه فوراً.
+    فحص الدول المتاحة:
+    1. تجرب تجيب كل الدول مرة واحدة من الموقع (get_countries_from_api).
+    2. لو ملقيتش، ترجع للطريقة القديمة (دولة دولة).
     """
     # ═══ أولاً: التحقق من الكاش ═══
     if not force_refresh:
@@ -799,64 +877,108 @@ def check_countries_for_service(service, max_workers=10, force_refresh=False):
                     logger.info(f"⚡ كاش {service}: {len(cached)} دولة (عمرها {int(age)}s)")
                     return [(item["country"], item["number"]) for item in cached]
     
-    # ═══ ثانياً: فحص جديد ═══
-    logger.info(f"🔍 فحص {service} من جديد...")
-    from concurrent.futures import ThreadPoolExecutor, as_completed
-    headers = {
-        "Authorization": f"Bearer {NUMBERPANEL_API_TOKEN}",
-        "Content-Type": "application/json",
-        "Accept": "application/json",
-    }
+    # ═══ ثانياً: محاولة جلب كل الدول مرة واحدة ═══
+    logger.info(f"🔍 محاولة جلب كل الدول لـ {service} من الموقع...")
+    all_countries_from_api = get_countries_from_api(service)
+    
     available = []
-
-    def try_country(country):
-        try:
-            url = f"{NUMBERPANEL_BASE}/request_number"
-            r = requests.post(url, json={"country": country, "service": service},
-                              headers=headers, timeout=10)
-            if r.status_code != 200:
-                return None
-            try: data = r.json()
-            except: data = None
-            if data and isinstance(data, dict):
-                if data.get("success") is False:
-                    return None
-                number = (data.get("number") or data.get("phone") or
-                          data.get("num") or data.get("msisdn"))
-                if number:
-                    return (country, number)
-            match = re.search(r'"number"\s*:\s*"([^"]+)"', r.text)
-            if match:
-                return (country, match.group(1))
-            return None
-        except: return None
-
-    all_countries = get_all_test_countries()
-
-    with ThreadPoolExecutor(max_workers=max_workers) as executor:
-        futures = {executor.submit(try_country, c): c for c in all_countries}
-        for fut in as_completed(futures):
+    
+    if all_countries_from_api:
+        logger.info(f"✅ {service}: تم العثور على {len(all_countries_from_api)} دولة من الـ API")
+        # جرب كل دولة من اللي رجعهم الموقع
+        from concurrent.futures import ThreadPoolExecutor, as_completed
+        headers = {
+            "Authorization": f"Bearer {NUMBERPANEL_API_TOKEN}",
+            "Content-Type": "application/json",
+            "Accept": "application/json",
+        }
+        
+        def try_country(country):
             try:
-                result = fut.result(timeout=12)
-                if result:
-                    country_code = result[0]
-                    available.append(result)
-                    register_discovered_country(country_code)
-            except: pass
-
-    # ═══ ثالثاً: مسح الكاش القديم وحفظ الجديد ═══
+                url = f"{NUMBERPANEL_BASE}/request_number"
+                r = requests.post(url, json={"country": country, "service": service},
+                                  headers=headers, timeout=10)
+                if r.status_code != 200:
+                    return (country, None)
+                try: data = r.json()
+                except: data = None
+                if data and isinstance(data, dict):
+                    if data.get("success") is False:
+                        return (country, None)
+                    number = (data.get("number") or data.get("phone") or
+                              data.get("num") or data.get("msisdn"))
+                    if number:
+                        return (country, number)
+                match = re.search(r'"number"\s*:\s*"([^"]+)"', r.text)
+                if match:
+                    return (country, match.group(1))
+                return (country, None)
+            except: return (country, None)
+        
+        with ThreadPoolExecutor(max_workers=max_workers) as executor:
+            futures = {executor.submit(try_country, c): c for c in all_countries_from_api}
+            for fut in as_completed(futures):
+                try:
+                    country, number = fut.result(timeout=12)
+                    if number:
+                        available.append((country, number))
+                        register_discovered_country(country)
+                except: pass
+    
+    # ═══ ثالثاً: لو مفيش نتيجة، نرجع للطريقة القديمة ═══
+    if not available:
+        logger.info(f"⚠️ {service}: الطريقة القديمة (دولة دولة)...")
+        from concurrent.futures import ThreadPoolExecutor, as_completed
+        headers = {
+            "Authorization": f"Bearer {NUMBERPANEL_API_TOKEN}",
+            "Content-Type": "application/json",
+            "Accept": "application/json",
+        }
+        
+        def try_country_old(country):
+            try:
+                url = f"{NUMBERPANEL_BASE}/request_number"
+                r = requests.post(url, json={"country": country, "service": service},
+                                  headers=headers, timeout=10)
+                if r.status_code != 200:
+                    return None
+                try: data = r.json()
+                except: data = None
+                if data and isinstance(data, dict):
+                    if data.get("success") is False:
+                        return None
+                    number = (data.get("number") or data.get("phone") or
+                              data.get("num") or data.get("msisdn"))
+                    if number:
+                        return (country, number)
+                match = re.search(r'"number"\s*:\s*"([^"]+)"', r.text)
+                if match:
+                    return (country, match.group(1))
+                return None
+            except: return None
+        
+        all_countries = get_all_test_countries()
+        with ThreadPoolExecutor(max_workers=max_workers) as executor:
+            futures = {executor.submit(try_country_old, c): c for c in all_countries}
+            for fut in as_completed(futures):
+                try:
+                    result = fut.result(timeout=12)
+                    if result:
+                        available.append(result)
+                        register_discovered_country(result[0])
+                except: pass
+    
+    # ═══ رابعاً: مسح الكاش القديم وحفظ الجديد ═══
     if available:
         now = time.time()
         cache_items = [{"country": c, "number": n, "timestamp": now} for c, n in available]
         with available_countries_lock:
-            # 🔥 مسح بيانات الخدمة القديمة قبل حفظ الجديدة
             if service in available_countries_cache:
                 del available_countries_cache[service]
-            # 🔥 حفظ البيانات الجديدة
             available_countries_cache[service] = cache_items
         save_available_cache()
         logger.info(f"✅ تم تحديث كاش {service}: {len(available)} دولة (تم مسح القديم)")
-
+    
     return available
 
 def request_number_from_country(service_key, country_code):
@@ -1122,7 +1244,6 @@ def get_services_menu():
         ("openai", "🤖 OpenAI"), ("tinder", "❤️ تندر"),
     ]
 
-    # ═══ الفلترة: بس الخدمات اللي عندها دول في الكاش ═══
     available_services = []
     with available_countries_lock:
         for key, name in services_list:
@@ -1130,7 +1251,6 @@ def get_services_menu():
             if cached and len(cached) > 0:
                 available_services.append((key, name))
 
-    # ═══ لو الكاش فاضي (أول تشغيل)، اعرض كل الخدمات ═══
     if not available_services:
         available_services = services_list
 
@@ -1169,7 +1289,8 @@ def get_owner_menu():
         InlineKeyboardButton("📥 آخر الأكواد", callback_data="np_last_codes", style="success")
     )
     markup.row(
-        InlineKeyboardButton("🌍 الدول المكتشفة", callback_data="owner_known_countries", style="success")
+        InlineKeyboardButton("🌍 الدول المكتشفة", callback_data="owner_known_countries", style="success"),
+        InlineKeyboardButton("🔍 فحص الدول الحالي", callback_data="owner_check_cache", style="primary")
     )
     markup.row(
         InlineKeyboardButton("🔄 تحديث الكاش فوراً", callback_data="owner_refresh_cache", style="success")
@@ -1716,7 +1837,7 @@ def owner_known_countries_cb(call):
     bot.send_message(call.message.chat.id, txt, parse_mode="HTML", reply_markup=markup)
 
 # ═══════════════════════════════════════════════════════════════
-# 🔄 تحديث الكاش فوراً (بعد التعديل)
+# 🔄 تحديث الكاش فوراً
 # ═══════════════════════════════════════════════════════════════
 @bot.callback_query_handler(func=lambda call: call.data == "owner_refresh_cache")
 def owner_refresh_cache_cb(call):
@@ -1729,38 +1850,50 @@ def owner_refresh_cache_cb(call):
             "⏳ جاري مسح البيانات القديمة وتحديث كل الخدمات من الموقع.\n"
             "استنى شوية...", parse_mode="HTML")
 
+        results_per_service = {}
         total_countries = 0
         services_done = 0
 
         for service in DEFAULT_SERVICES.keys():
             try:
                 result = check_countries_for_service(service, max_workers=10, force_refresh=True)
-                if result:
-                    total_countries += len(result)
+                count = len(result) if result else 0
+                results_per_service[service] = count
+                if count > 0:
+                    total_countries += count
                     services_done += 1
                 time.sleep(2)
             except Exception as e:
                 logger.error(f"❌ خطأ {service}: {e}")
+                results_per_service[service] = 0
 
-        # رسالة النتيجة النهائية
         try:
             bot.delete_message(msg.chat.id, msg.message_id)
         except: pass
 
-        final_text = (
-            "✅ <b>تم تحديث الدول كاملة!</b>\n\n"
-            "━━━━━━━━━━━━━━━━━━━━━\n"
-            f"📊 <b>الخدمات المحدثة:</b> {services_done}\n"
-            f"🌍 <b>إجمالي الدول:</b> {total_countries}\n"
-            "━━━━━━━━━━━━━━━━━━━━━\n\n"
-            "💾 تم مسح البيانات القديمة وحفظ الجديدة."
-        )
-        bot.send_message(call.message.chat.id, final_text, parse_mode="HTML")
+        report = "✅ <b>تم تحديث الدول كاملة!</b>\n\n"
+        report += "━━━━━━━━━━━━━━━━━━━━━\n"
+        report += f"📊 <b>الخدمات المحدثة:</b> {services_done}\n"
+        report += f"🌍 <b>إجمالي الدول:</b> {total_countries}\n"
+        report += "━━━━━━━━━━━━━━━━━━━━━\n\n"
+        report += "📋 <b>تفاصيل الدول لكل خدمة:</b>\n\n"
+
+        for service, count in results_per_service.items():
+            service_name = DEFAULT_SERVICES.get(service, service)
+            service_icon = get_service_icon(service)
+            if count > 0:
+                report += f"{service_icon} <b>{service_name}:</b> {count} دولة\n"
+            else:
+                report += f"❌ <b>{service_name}:</b> لا يوجد\n"
+
+        report += "\n💾 تم مسح البيانات القديمة وحفظ الجديدة."
+
+        bot.send_message(call.message.chat.id, report, parse_mode="HTML")
 
     Thread(target=do_refresh, daemon=True).start()
 
 # ═══════════════════════════════════════════════════════════════
-# 🗑 إلغاء تحديث الكاش القديم (جديد)
+# 🗑 إلغاء تحديث الكاش القديم
 # ═══════════════════════════════════════════════════════════════
 @bot.callback_query_handler(func=lambda call: call.data == "owner_cancel_cache")
 def owner_cancel_cache_cb(call):
@@ -1776,7 +1909,6 @@ def owner_cancel_cache_cb(call):
             count_countries = sum(len(items) for items in available_countries_cache.values())
             available_countries_cache.clear()
 
-        # حفظ الكاش الفاضي
         save_available_cache()
 
         try:
@@ -1794,6 +1926,45 @@ def owner_cancel_cache_cb(call):
         bot.send_message(call.message.chat.id, final_text, parse_mode="HTML")
 
     Thread(target=do_cancel, daemon=True).start()
+
+# ═══════════════════════════════════════════════════════════════
+# 🔍 فحص الدول الحالي (جديد)
+# ═══════════════════════════════════════════════════════════════
+@bot.callback_query_handler(func=lambda call: call.data == "owner_check_cache")
+def owner_check_cache_cb(call):
+    if call.from_user.id != MAIN_ADMIN_ID: return
+    with available_countries_lock:
+        if not available_countries_cache:
+            bot.answer_callback_query(call.id, "⚠️ الكاش فاضي! اضغط تحديث الكاش الأول", show_alert=True)
+            return
+        total = sum(len(items) for items in available_countries_cache.values())
+        services = len(available_countries_cache)
+
+    txt = f"🔍 <b>فحص الدول الحالي</b>\n\n"
+    txt += f"━━━━━━━━━━━━━━━━━━━━━\n"
+    txt += f"📊 <b>الخدمات:</b> {services}\n"
+    txt += f"🌍 <b>إجمالي الدول:</b> {total}\n"
+    txt += f"━━━━━━━━━━━━━━━━━━━━━\n\n"
+
+    with available_countries_lock:
+        for service, items in available_countries_cache.items():
+            service_name = DEFAULT_SERVICES.get(service, service)
+            service_icon = get_service_icon(service)
+            txt += f"{service_icon} <b>{service_name}:</b> {len(items)} دولة\n"
+            for item in items[:20]:
+                country = item.get("country", "?")
+                flag = get_flag(country)
+                cname = get_country_name(country)
+                txt += f"   {flag} {cname}\n"
+            txt += "\n"
+
+    markup = InlineKeyboardMarkup()
+    markup.add(InlineKeyboardButton("🔙 رجوع", callback_data="owner_panel", style="success"))
+    try:
+        bot.edit_message_text(txt, call.message.chat.id, call.message.message_id,
+                              parse_mode="HTML", reply_markup=markup)
+    except:
+        bot.send_message(call.message.chat.id, txt, parse_mode="HTML", reply_markup=markup)
 
 @bot.callback_query_handler(func=lambda call: call.data == "owner_add_admin_btn")
 def owner_add_admin_cb(call):
@@ -1991,11 +2162,9 @@ if __name__ == "__main__":
     load_available_cache()
     logger.info("🚀 بدء التشغيل...")
 
-    # محدّث الكاش التلقائي
     Thread(target=cache_updater_loop, daemon=True).start()
     logger.info("✅ محدّث الكاش شغال")
 
-    # فحص الأكواد
     if NUMBERPANEL_API_TOKEN:
         Thread(target=np_check_new_code_loop, daemon=True).start()
         logger.info("✅ فحص NumberPanel كل ثانية")
