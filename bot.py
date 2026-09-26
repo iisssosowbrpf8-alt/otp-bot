@@ -844,14 +844,18 @@ def check_countries_for_service(service, max_workers=10, force_refresh=False):
                     register_discovered_country(country_code)
             except: pass
 
-    # ═══ ثالثاً: حفظ في الكاش ═══
+    # ═══ ثالثاً: مسح الكاش القديم وحفظ الجديد ═══
     if available:
         now = time.time()
         cache_items = [{"country": c, "number": n, "timestamp": now} for c, n in available]
         with available_countries_lock:
+            # 🔥 مسح بيانات الخدمة القديمة قبل حفظ الجديدة
+            if service in available_countries_cache:
+                del available_countries_cache[service]
+            # 🔥 حفظ البيانات الجديدة
             available_countries_cache[service] = cache_items
         save_available_cache()
-        logger.info(f"✅ تم حفظ كاش {service}: {len(available)} دولة")
+        logger.info(f"✅ تم تحديث كاش {service}: {len(available)} دولة (تم مسح القديم)")
 
     return available
 
