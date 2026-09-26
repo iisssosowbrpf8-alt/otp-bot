@@ -1174,6 +1174,9 @@ def get_owner_menu():
     markup.row(
         InlineKeyboardButton("🔄 تحديث الكاش فوراً", callback_data="owner_refresh_cache", style="success")
     )
+    markup.row(
+        InlineKeyboardButton("🗑 إلغاء تحديث الكاش القديم", callback_data="owner_cancel_cache", style="danger")
+    )
     markup.row(InlineKeyboardButton("📣 الإذاعة للمستخدمين", callback_data="owner_broadcast_btn", style="success"))
     markup.row(
         InlineKeyboardButton("➕ إضافة مشرف", callback_data="owner_add_admin_btn", style="success"),
@@ -1466,13 +1469,11 @@ def service_selected(call):
     service_name = DEFAULT_SERVICES.get(service_key, service_key)
     service_icon = get_service_icon(service_key)
 
-    # ═══ تحقق من الكاش أولاً ═══
     with available_countries_lock:
         cached = available_countries_cache.get(service_key, [])
         has_cache = bool(cached) and (time.time() - cached[0].get("timestamp", 0)) < 3600
 
     if has_cache:
-        # رد فوري من الكاش
         bot.answer_callback_query(call.id, f"⚡ {len(cached)} دولة")
     else:
         bot.edit_message_text(
@@ -1496,7 +1497,7 @@ def service_selected(call):
         return
 
     markup = InlineKeyboardMarkup(row_width=2)
-    for country_code, number in available[:10]:
+    for country_code, number in available[:20]:
         flag = get_flag(country_code)
         cname = get_country_name(country_code)
         markup.add(InlineKeyboardButton(
@@ -1714,13 +1715,85 @@ def owner_known_countries_cb(call):
     markup.add(InlineKeyboardButton("🔙 رجوع", callback_data="owner_panel", style="success"))
     bot.send_message(call.message.chat.id, txt, parse_mode="HTML", reply_markup=markup)
 
+# ═══════════════════════════════════════════════════════════════
+# 🔄 تحديث الكاش فوراً (بعد التعديل)
+# ═══════════════════════════════════════════════════════════════
 @bot.callback_query_handler(func=lambda call: call.data == "owner_refresh_cache")
 def owner_refresh_cache_cb(call):
     if call.from_user.id != MAIN_ADMIN_ID: return
     bot.answer_callback_query(call.id, "🔄 جاري تحديث الكاش...")
-    bot.send_message(call.message.chat.id, "🔄 بدء تحديث الكاش في الخلفية...\nاستنى شوية.")
-    Thread(target=lambda: [check_countries_for_service(s, max_workers=10, force_refresh=True) 
-                          for s in DEFAULT_SERVICES.keys()], daemon=True).start()
+
+    def do_refresh():
+        msg = bot.send_message(call.message.chat.id,
+            "🔄 <b>بدأ تحديث الكاش...</b>\n\n"
+            "⏳ جاري مسح البيانات القديمة وتحديث كل الخدمات من الموقع.\n"
+            "استنى شوية...", parse_mode="HTML")
+
+        total_countries = 0
+        services_done = 0
+
+        for service in DEFAULT_SERVICES.keys():
+            try:
+                result = check_countries_for_service(service, max_workers=10, force_refresh=True)
+                if result:
+                    total_countries += len(result)
+                    services_done += 1
+                time.sleep(2)
+            except Exception as e:
+                logger.error(f"❌ خطأ {service}: {e}")
+
+        # رسالة النتيجة النهائية
+        try:
+            bot.delete_message(msg.chat.id, msg.message_id)
+        except: pass
+
+        final_text = (
+            "✅ <b>تم تحديث الدول كاملة!</b>\n\n"
+            "━━━━━━━━━━━━━━━━━━━━━\n"
+            f"📊 <b>الخدمات المحدثة:</b> {services_done}\n"
+            f"🌍 <b>إجمالي الدول:</b> {total_countries}\n"
+            "━━━━━━━━━━━━━━━━━━━━━\n\n"
+            "💾 تم مسح البيانات القديمة وحفظ الجديدة."
+        )
+        bot.send_message(call.message.chat.id, final_text, parse_mode="HTML")
+
+    Thread(target=do_refresh, daemon=True).start()
+
+# ═══════════════════════════════════════════════════════════════
+# 🗑 إلغاء تحديث الكاش القديم (جديد)
+# ═══════════════════════════════════════════════════════════════
+@bot.callback_query_handler(func=lambda call: call.data == "owner_cancel_cache")
+def owner_cancel_cache_cb(call):
+    if call.from_user.id != MAIN_ADMIN_ID: return
+    bot.answer_callback_query(call.id, "🗑 جاري إلغاء الكاش...")
+
+    def do_cancel():
+        msg = bot.send_message(call.message.chat.id,
+            "🗑 <b>جاري إلغاء كل التحديثات القديمة...</b>", parse_mode="HTML")
+
+        with available_countries_lock:
+            count_services = len(available_countries_cache)
+            count_countries = sum(len(items) for items in available_countries_cache.values())
+            available_countries_cache.clear()
+
+        # حفظ الكاش الفاضي
+        save_available_cache()
+
+        try:
+            bot.delete_message(msg.chat.id, msg.message_id)
+        except: pass
+
+        final_text = (
+            "✅ <b>تم إلغاء كل التحديثات القديمة!</b>\n\n"
+            "━━━━━━━━━━━━━━━━━━━━━\n"
+            f"🗑 <b>الخدمات الملغاة:</b> {count_services}\n"
+            f"🌍 <b>الدول الملغاة:</b> {count_countries}\n"
+            "━━━━━━━━━━━━━━━━━━━━━\n\n"
+            "💡 الكاش دلوقتي فاضي. اضغط <b>🔄 تحديث الكاش فوراً</b> عشان تجيب الدول الجديدة."
+        )
+        bot.send_message(call.message.chat.id, final_text, parse_mode="HTML")
+
+    Thread(target=do_cancel, daemon=True).start()
 
 @bot.callback_query_handler(func=lambda call: call.data == "owner_add_admin_btn")
 def owner_add_admin_cb(call):
