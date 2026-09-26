@@ -127,39 +127,70 @@ def auto_delete_message(chat_id, message_id, delay=300):
     Thread(target=delete, daemon=True).start()
 
 # ═══════════════════════════════════════════════════════════════
-# 🌍 كل دول العالم (تلقائياً من pycountry)
+# 🌍 كل دول العالم (250+ دولة)
 # ═══════════════════════════════════════════════════════════════
 def get_all_world_countries():
-    """كل دول العالم بكود ISO Alpha-2"""
+    """كل دول العالم بكود ISO Alpha-2 + قائمة يدوية شاملة"""
     try:
-        countries = [c.alpha_2 for c in pycountry.countries]
+        countries = set([c.alpha_2 for c in pycountry.countries])
+        
+        manual_countries = {
+            "DZ", "AO", "BJ", "BW", "BF", "BI", "CM", "CV", "CF", "TD",
+            "KM", "CG", "CD", "CI", "DJ", "EG", "GQ", "ER", "SZ", "ET",
+            "GA", "GM", "GH", "GN", "GW", "KE", "LS", "LR", "LY", "MG",
+            "MW", "ML", "MR", "MU", "MA", "MZ", "NA", "NE", "NG", "RW",
+            "ST", "SN", "SC", "SL", "SO", "ZA", "SS", "SD", "TZ", "TG",
+            "TN", "UG", "ZM", "ZW", "EH",
+            "AF", "AM", "AZ", "BH", "BD", "BT", "BN", "KH", "CN", "CY",
+            "GE", "IN", "ID", "IR", "IQ", "IL", "JP", "JO", "KZ", "KW",
+            "KG", "LA", "LB", "MY", "MV", "MN", "MM", "NP", "KP", "OM",
+            "PK", "PS", "PH", "QA", "SA", "SG", "KR", "LK", "SY", "TW",
+            "TJ", "TH", "TL", "TR", "TM", "AE", "UZ", "VN", "YE",
+            "AL", "AD", "AT", "BY", "BE", "BA", "BG", "HR", "CZ", "DK",
+            "EE", "FI", "FR", "DE", "GR", "HU", "IS", "IE", "IT", "XK",
+            "LV", "LI", "LT", "LU", "MT", "MD", "MC", "ME", "NL", "MK",
+            "NO", "PL", "PT", "RO", "RU", "SM", "RS", "SK", "SI", "ES",
+            "SE", "CH", "UA", "GB", "VA",
+            "AG", "BS", "BB", "BZ", "CA", "CR", "CU", "DM", "DO", "SV",
+            "GD", "GT", "HT", "HN", "JM", "MX", "NI", "PA", "KN", "LC",
+            "VC", "TT", "US",
+            "AR", "BO", "BR", "CL", "CO", "EC", "GY", "PY", "PE", "SR",
+            "UY", "VE",
+            "AU", "FJ", "KI", "MH", "FM", "NR", "NZ", "PW", "PG", "WS",
+            "SB", "TO", "TV", "VU",
+        }
+        
+        all_countries = countries | manual_countries
+        
         priority = [
             "PK", "HT", "TG", "BF", "LB", "TZ", "PE", "CF", "AM", "GE", "AZ",
             "EG", "SA", "MA", "DZ", "TN", "LY", "IQ", "JO", "PS", "AE",
             "KW", "QA", "BH", "OM", "YE", "SD", "SO", "DJ", "ER", "ET",
             "KE", "NG", "GH", "ZA", "UG", "MZ", "ZM", "ZW", "AO", "CM",
             "SN", "CI", "GN", "ML", "NE", "TD", "MR", "CV", "GM", "SL",
-            "LR", "TG", "BJ", "GA", "CG", "CD", "CF", "TD", "GQ", "ST",
+            "LR", "BJ", "GA", "CG", "CD", "GQ", "ST",
             "US", "GB", "DE", "FR", "IT", "ES", "PT", "NL", "BE", "CH",
             "AT", "SE", "NO", "DK", "FI", "IE", "GR", "PL", "RO", "BG",
             "CZ", "SK", "HU", "UA", "RU", "TR", "IN", "ID", "PH", "MY",
             "SG", "TH", "VN", "BD", "LK", "NP", "CN", "JP", "KR", "AU",
             "NZ", "BR", "AR", "MX", "CA", "CL", "CO", "PE", "VE", "EC",
         ]
+        
         sorted_countries = []
         for code in priority:
-            if code in countries:
+            if code in all_countries:
                 sorted_countries.append(code)
-        for code in countries:
+        for code in sorted(all_countries):
             if code not in sorted_countries:
                 sorted_countries.append(code)
+        
+        logger.info(f"🌍 إجمالي الدول: {len(sorted_countries)}")
         return sorted_countries
     except Exception as e:
         logger.error(f"خطأ pycountry: {e}")
         return ["PK", "HT", "TG", "BF", "LB", "TZ", "PE", "CF", "AM", "EG", "SA"]
 
 DEFAULT_TEST_COUNTRIES = get_all_world_countries()
-logger.info(f"🌍 عدد الدول: {len(DEFAULT_TEST_COUNTRIES)}")
 
 COUNTRIES_NAMES_AR = {
     "PK": "🇵🇰 باكستان", "HT": "🇭🇹 هايتي", "TG": "🇹🇬 توجو",
@@ -181,6 +212,59 @@ COUNTRIES_NAMES_AR = {
     "VN": "🇻🇳 فيتنام", "TH": "🇹🇭 تايلاند", "PH": "🇵🇭 الفلبين",
     "MY": "🇲🇾 ماليزيا", "SG": "🇸🇬 سنغافورة", "BD": "🇧🇩 بنغلاديش",
     "NP": "🇳🇵 نيبال", "LK": "🇱🇰 سريلانكا",
+    "AF": "🇦🇫 أفغانستان", "AL": "🇦🇱 ألبانيا", "AD": "🇦🇩 أندورا",
+    "AO": "🇦🇴 أنغولا", "AG": "🇦🇬 أنتيغوا وبربودا", "AR": "🇦🇷 الأرجنتين",
+    "AW": "🇦🇼 أروبا", "AU": "🇦🇺 أستراليا", "AT": "🇦🇹 النمسا",
+    "BS": "🇧🇸 الباهاما", "BH": "🇧🇭 البحرين", "BB": "🇧🇧 بربادوس",
+    "BY": "🇧🇾 بيلاروسيا", "BZ": "🇧🇿 بليز", "BJ": "🇧🇯 بنين",
+    "BT": "🇧🇹 بوتان", "BO": "🇧🇴 بوليفيا", "BA": "🇧🇦 البوسنة",
+    "BW": "🇧🇼 بوتسوانا", "BN": "🇧🇳 بروناي", "BG": "🇧🇬 بلغاريا",
+    "BI": "🇧🇮 بوروندي", "KH": "🇰🇭 كمبوديا", "CM": "🇨🇲 الكاميرون",
+    "CV": "🇨🇻 الرأس الأخضر", "CL": "🇨🇱 تشيلي", "CN": "🇨🇳 الصين",
+    "CO": "🇨🇴 كولومبيا", "KM": "🇰🇲 جزر القمر", "CG": "🇨🇬 الكونغو",
+    "CD": "🇨🇩 الكونغو الديمقراطية", "CR": "🇨🇷 كوستاريكا",
+    "CI": "🇨🇮 ساحل العاج", "HR": "🇭🇷 كرواتيا", "CU": "🇨🇺 كوبا",
+    "CY": "🇨🇾 قبرص", "DJ": "🇩🇯 جيبوتي", "DM": "🇩🇲 دومينيكا",
+    "DO": "🇩🇴 الدومينيكان", "EC": "🇪🇨 الإكوادور", "SV": "🇸🇻 السلفادور",
+    "GQ": "🇬🇶 غينيا الاستوائية", "ER": "🇪🇷 إريتريا", "EE": "🇪🇪 إستونيا",
+    "ET": "🇪🇹 إثيوبيا", "FJ": "🇫🇯 فيجي", "FI": "🇫🇮 فنلندا",
+    "GA": "🇬🇦 الغابون", "GM": "🇬🇲 غامبيا", "GT": "🇬🇹 غواتيمالا",
+    "GN": "🇬🇳 غينيا", "GW": "🇬🇼 غينيا بيساو", "GY": "🇬🇾 غيانا",
+    "HN": "🇭🇳 هندوراس", "HU": "🇭🇺 هنغاريا",
+    "IS": "🇮🇸 آيسلندا", "IR": "🇮🇷 إيران", "IQ": "🇮🇶 العراق",
+    "IL": "🇮🇱 إسرائيل", "JM": "🇯🇲 جامايكا", "JP": "🇯🇵 اليابان",
+    "JO": "🇯🇴 الأردن", "KZ": "🇰🇿 كازاخستان", "KI": "🇰🇮 كيريباتي",
+    "KP": "🇰🇵 كوريا الشمالية", "KR": "🇰🇷 كوريا الجنوبية",
+    "KW": "🇰🇼 الكويت", "KG": "🇰🇬 قيرغيزستان", "LA": "🇱🇦 لاوس",
+    "LV": "🇱🇻 لاتفيا", "LS": "🇱🇸 ليسوتو", "LR": "🇱🇷 ليبيريا",
+    "LI": "🇱🇮 ليختنشتاين", "LT": "🇱🇹 ليتوانيا", "LU": "🇱🇺 لوكسمبورغ",
+    "MO": "🇲🇴 ماكاو", "MG": "🇲🇬 مدغشقر", "MW": "🇲🇼 مالاوي",
+    "MV": "🇲🇻 المالديف", "ML": "🇲🇱 مالي", "MT": "🇲🇹 مالطا",
+    "MH": "🇲🇭 جزر مارشال", "MR": "🇲🇷 موريتانيا", "MU": "🇲🇺 موريشيوس",
+    "MX": "🇲🇽 المكسيك", "FM": "🇫🇲 ميكرونيزيا", "MD": "🇲🇩 مولدوفا",
+    "MC": "🇲🇨 موناكو", "MN": "🇲🇳 منغوليا", "ME": "🇲🇪 الجبل الأسود",
+    "MZ": "🇲🇿 موزمبيق", "MM": "🇲🇲 ميانمار", "NA": "🇳🇦 ناميبيا",
+    "NR": "🇳🇷 ناورو", "NI": "🇳🇮 نيكاراغوا",
+    "NE": "🇳🇪 النيجر", "OM": "🇴🇲 عمان",
+    "PW": "🇵🇼 بالاو", "PS": "🇵🇸 فلسطين",
+    "PA": "🇵🇦 بنما", "PG": "🇵🇬 بابوا غينيا الجديدة", "PY": "🇵🇾 باراغواي",
+    "QA": "🇶🇦 قطر", "RW": "🇷🇼 رواندا",
+    "KN": "🇰🇳 سانت كيتس", "LC": "🇱🇨 سانت لوسيا", "VC": "🇻🇨 سانت فنسنت",
+    "WS": "🇼🇸 ساموا", "SM": "🇸🇲 سان مارينو", "ST": "🇸🇹 ساو تومي",
+    "SN": "🇸🇳 السنغال", "RS": "🇷🇸 صربيا",
+    "SC": "🇸🇨 سيشل", "SL": "🇸🇱 سيراليون", "SK": "🇸🇰 سلوفاكيا",
+    "SI": "🇸🇮 سلوفينيا", "SB": "🇸🇧 جزر سليمان", "SO": "🇸🇴 الصومال",
+    "SS": "🇸🇸 جنوب السودان", "SD": "🇸🇩 السودان",
+    "SR": "🇸🇷 سورينام", "SZ": "🇸🇿 إسواتيني",
+    "SY": "🇸🇾 سوريا", "TJ": "🇹🇯 طاجيكستان",
+    "TL": "🇹🇱 تيمور الشرقية",
+    "TO": "🇹🇴 تونغا", "TT": "🇹🇹 ترينيداد",
+    "TM": "🇹🇲 تركمانستان",
+    "TV": "🇹🇻 توفالو", "UG": "🇺🇬 أوغندا",
+    "AE": "🇦🇪 الإمارات",
+    "UY": "🇺🇾 أوروغواي", "UZ": "🇺🇿 أوزبكستان", "VU": "🇻🇺 فانواتو",
+    "VA": "🇻🇦 الفاتيكان", "VE": "🇻🇪 فنزويلا", "YE": "🇾🇪 اليمن",
+    "ZM": "🇿🇲 زامبيا", "ZW": "🇿🇼 زيمبابوي",
 }
 
 DEFAULT_SERVICES = {
@@ -239,13 +323,8 @@ def load_available_cache():
             try:
                 with open(AVAILABLE_COUNTRIES_FILE, "r", encoding="utf-8") as f:
                     data = json.load(f)
-                    now = time.time()
-                    fresh_cache = {}
-                    for service, items in data.items():
-                        if items and (now - items[0].get("timestamp", 0)) < 7200:
-                            fresh_cache[service] = items
-                    available_countries_cache = fresh_cache
-                    logger.info(f"📂 كاش: {len(fresh_cache)} خدمة")
+                    available_countries_cache = data
+                    logger.info(f"📂 كاش: {len(data)} خدمة")
             except Exception as e:
                 logger.error(f"خطأ تحميل الكاش: {e}")
                 available_countries_cache = {}
@@ -401,7 +480,34 @@ SPECIAL_FLAGS = {
     "DK": "🇩🇰", "FI": "🇫🇮", "IE": "🇮🇪", "GR": "🇬🇷", "CZ": "🇨🇿",
     "SK": "🇸🇰", "HU": "🇭🇺", "VN": "🇻🇳", "TH": "🇹🇭", "PH": "🇵🇭",
     "MY": "🇲🇾", "SG": "🇸🇬", "BD": "🇧🇩", "LK": "🇱🇰", "NP": "🇳🇵",
-    "AM": "🇦🇲", "GE": "🇬🇪", "AZ": "🇦🇿",
+    "AM": "🇦🇲", "GE": "🇬🇪", "AZ": "🇦🇿", "AF": "🇦🇫",
+    "AL": "🇦🇱", "AD": "🇦🇩", "AO": "🇦🇴", "AR": "🇦🇷",
+    "AU": "🇦🇺", "BS": "🇧🇸", "BH": "🇧🇭", "BB": "🇧🇧",
+    "BY": "🇧🇾", "BZ": "🇧🇿", "BJ": "🇧🇯", "BT": "🇧🇹",
+    "BO": "🇧🇴", "BA": "🇧🇦", "BW": "🇧🇼", "BN": "🇧🇳",
+    "BI": "🇧🇮", "KH": "🇰🇭", "CM": "🇨🇲", "CV": "🇨🇻", "CL": "🇨🇱",
+    "CN": "🇨🇳", "CO": "🇨🇴", "KM": "🇰🇲", "CG": "🇨🇬", "CD": "🇨🇩",
+    "CR": "🇨🇷", "CI": "🇨🇮", "HR": "🇭🇷", "CU": "🇨🇺", "CY": "🇨🇾",
+    "DJ": "🇩🇯", "DM": "🇩🇲", "DO": "🇩🇴", "EC": "🇪🇨", "SV": "🇸🇻",
+    "GQ": "🇬🇶", "ER": "🇪🇷", "EE": "🇪🇪", "ET": "🇪🇹", "FJ": "🇫🇯",
+    "GA": "🇬🇦", "GM": "🇬🇲", "GT": "🇬🇹", "GN": "🇬🇳",
+    "GW": "🇬🇼", "GY": "🇬🇾", "HN": "🇭🇳", "IS": "🇮🇸",
+    "IR": "🇮🇷", "IL": "🇮🇱", "JM": "🇯🇲", "JP": "🇯🇵", "KZ": "🇰🇿",
+    "KI": "🇰🇮", "KP": "🇰🇵", "KR": "🇰🇷", "KG": "🇰🇬", "LA": "🇱🇦",
+    "LV": "🇱🇻", "LS": "🇱🇸", "LR": "🇱🇷", "LI": "🇱🇮", "LT": "🇱🇹",
+    "LU": "🇱🇺", "MO": "🇲🇴", "MG": "🇲🇬", "MW": "🇲🇼", "MV": "🇲🇻",
+    "ML": "🇲🇱", "MT": "🇲🇹", "MH": "🇲🇭", "MR": "🇲🇷", "MU": "🇲🇺",
+    "MX": "🇲🇽", "FM": "🇫🇲", "MD": "🇲🇩", "MC": "🇲🇨", "MN": "🇲🇳",
+    "ME": "🇲🇪", "MZ": "🇲🇿", "MM": "🇲🇲", "NA": "🇳🇦", "NR": "🇳🇷",
+    "NI": "🇳🇮", "NE": "🇳🇪", "OM": "🇴🇲", "PW": "🇵🇼", "PS": "🇵🇸",
+    "PA": "🇵🇦", "PG": "🇵🇬", "PY": "🇵🇾", "QA": "🇶🇦", "RW": "🇷🇼",
+    "KN": "🇰🇳", "LC": "🇱🇨", "VC": "🇻🇨", "WS": "🇼🇸", "SM": "🇸🇲",
+    "ST": "🇸🇹", "SN": "🇸🇳", "RS": "🇷🇸", "SC": "🇸🇨", "SL": "🇸🇱",
+    "SI": "🇸🇮", "SB": "🇸🇧", "SO": "🇸🇴", "SS": "🇸🇸", "SD": "🇸🇩",
+    "SR": "🇸🇷", "SZ": "🇸🇿", "SY": "🇸🇾", "TJ": "🇹🇯", "TL": "🇹🇱",
+    "TO": "🇹🇴", "TT": "🇹🇹", "TM": "🇹🇲", "TV": "🇹🇻", "UG": "🇺🇬",
+    "UY": "🇺🇾", "UZ": "🇺🇿", "VU": "🇻🇺", "VA": "🇻🇦", "VE": "🇻🇪",
+    "YE": "🇾🇪", "ZM": "🇿🇲", "ZW": "🇿🇼",
 }
 
 def get_flag(country_code):
@@ -782,12 +888,9 @@ def np_get_latest_codes():
     return []
 
 # ═══════════════════════════════════════════════════════════════
-# 🔥 فحص الدول (مع كاش)
+# 🔥 فحص الدول — مباشرة بدون كاش
 # ═══════════════════════════════════════════════════════════════
 def get_countries_from_api(service):
-    """
-    ✅ محاولة جلب كل الدول من الموقع مرة واحدة (Endpoints محتملة)
-    """
     headers = {
         "Authorization": f"Bearer {NUMBERPANEL_API_TOKEN}",
         "Content-Type": "application/json",
@@ -805,10 +908,21 @@ def get_countries_from_api(service):
         f"/get_countries?service={service}",
         f"/country_list/{service}",
         f"/all_countries/{service}",
+        f"/list_countries/{service}",
+        f"/countries/list/{service}",
+        f"/service/{service}/countries",
+        f"/service/{service}",
+        f"/available/{service}",
+        f"/available?service={service}",
+        f"/country/{service}",
+        f"/service_countries/{service}",
+        f"/get_available_countries/{service}",
+        f"/get_available_countries?service={service}",
         "/countries",
         "/available_countries",
         "/get_countries",
         "/services",
+        "/available",
     ]
     
     for ep in endpoints:
@@ -829,18 +943,18 @@ def get_countries_from_api(service):
                     if isinstance(item, str):
                         countries.append(item)
                     elif isinstance(item, dict):
-                        code = item.get("code") or item.get("country") or item.get("iso") or item.get("country_code")
+                        code = item.get("code") or item.get("country") or item.get("iso") or item.get("country_code") or item.get("id")
                         if code:
                             countries.append(code)
             
             elif isinstance(data, dict):
-                for key in ("countries", "data", "items", "list", "available"):
+                for key in ("countries", "data", "items", "list", "available", "result", "results"):
                     if key in data and isinstance(data[key], list):
                         for item in data[key]:
                             if isinstance(item, str):
                                 countries.append(item)
                             elif isinstance(item, dict):
-                                code = item.get("code") or item.get("country") or item.get("iso") or item.get("country_code")
+                                code = item.get("code") or item.get("country") or item.get("iso") or item.get("country_code") or item.get("id")
                                 if code:
                                     countries.append(code)
                         break
@@ -856,23 +970,7 @@ def get_countries_from_api(service):
     
     return []
 
-def check_countries_for_service(service, max_workers=10, force_refresh=False):
-    """
-    فحص الدول المتاحة:
-    1. تجرب تجيب كل الدول مرة واحدة من الموقع (get_countries_from_api).
-    2. لو ملقيتش، ترجع للطريقة القديمة (دولة دولة).
-    """
-    # ═══ أولاً: التحقق من الكاش ═══
-    if not force_refresh:
-        with available_countries_lock:
-            cached = available_countries_cache.get(service, [])
-            if cached:
-                age = time.time() - cached[0].get("timestamp", 0)
-                if age < 3600:
-                    logger.info(f"⚡ كاش {service}: {len(cached)} دولة (عمرها {int(age)}s)")
-                    return [(item["country"], item["number"]) for item in cached]
-    
-    # ═══ ثانياً: محاولة جلب كل الدول مرة واحدة ═══
+def check_countries_for_service(service, max_workers=30):
     logger.info(f"🔍 محاولة جلب كل الدول لـ {service} من الموقع...")
     all_countries_from_api = get_countries_from_api(service)
     
@@ -891,7 +989,7 @@ def check_countries_for_service(service, max_workers=10, force_refresh=False):
             try:
                 url = f"{NUMBERPANEL_BASE}/request_number"
                 r = requests.post(url, json={"country": country, "service": service},
-                                  headers=headers, timeout=10)
+                                  headers=headers, timeout=8)
                 if r.status_code != 200:
                     return (country, None)
                 try: data = r.json()
@@ -913,15 +1011,14 @@ def check_countries_for_service(service, max_workers=10, force_refresh=False):
             futures = {executor.submit(try_country, c): c for c in all_countries_from_api}
             for fut in as_completed(futures):
                 try:
-                    country, number = fut.result(timeout=12)
+                    country, number = fut.result(timeout=10)
                     if number:
                         available.append((country, number))
                         register_discovered_country(country)
                 except: pass
     
-    # ═══ ثالثاً: لو مفيش نتيجة، نرجع للطريقة القديمة ═══
     if not available:
-        logger.info(f"⚠️ {service}: الطريقة القديمة (دولة دولة)...")
+        logger.info(f"⚠️ {service}: الطريقة القديمة (كل دول العالم)...")
         from concurrent.futures import ThreadPoolExecutor, as_completed
         headers = {
             "Authorization": f"Bearer {NUMBERPANEL_API_TOKEN}",
@@ -933,7 +1030,7 @@ def check_countries_for_service(service, max_workers=10, force_refresh=False):
             try:
                 url = f"{NUMBERPANEL_BASE}/request_number"
                 r = requests.post(url, json={"country": country, "service": service},
-                                  headers=headers, timeout=10)
+                                  headers=headers, timeout=8)
                 if r.status_code != 200:
                     return None
                 try: data = r.json()
@@ -952,31 +1049,22 @@ def check_countries_for_service(service, max_workers=10, force_refresh=False):
             except: return None
         
         all_countries = get_all_test_countries()
+        logger.info(f"🌍 فحص {len(all_countries)} دولة بـ 30 worker...")
+        
         with ThreadPoolExecutor(max_workers=max_workers) as executor:
             futures = {executor.submit(try_country_old, c): c for c in all_countries}
             for fut in as_completed(futures):
                 try:
-                    result = fut.result(timeout=12)
+                    result = fut.result(timeout=10)
                     if result:
                         available.append(result)
                         register_discovered_country(result[0])
                 except: pass
     
-    # ═══ رابعاً: مسح الكاش القديم وحفظ الجديد ═══
-    if available:
-        now = time.time()
-        cache_items = [{"country": c, "number": n, "timestamp": now} for c, n in available]
-        with available_countries_lock:
-            if service in available_countries_cache:
-                del available_countries_cache[service]
-            available_countries_cache[service] = cache_items
-        save_available_cache()
-        logger.info(f"✅ تم تحديث كاش {service}: {len(available)} دولة (تم مسح القديم)")
-    
+    logger.info(f"✅ {service}: {len(available)} دولة متاحة")
     return available
 
 def request_number_from_country(service_key, country_code):
-    """طلب رقم من دولة محددة (سريع)"""
     try:
         url = f"{NUMBERPANEL_BASE}/request_number"
         headers = {
@@ -1171,35 +1259,6 @@ def np_check_new_code_loop():
         time.sleep(1)
 
 # ═══════════════════════════════════════════════════════════════
-# 🔄 محدّث الكاش (كل ساعة)
-# ═══════════════════════════════════════════════════════════════
-def cache_updater_loop():
-    """يحدّث كاش الدول لكل خدمة كل ساعة"""
-    logger.info("🔄 بدء محدّث الكاش...")
-    time.sleep(30)
-    
-    services_to_check = list(DEFAULT_SERVICES.keys())
-    
-    while True:
-        try:
-            logger.info("=" * 50)
-            logger.info("🔄 بدء دورة تحديث الكاش...")
-            for service in services_to_check:
-                try:
-                    logger.info(f"🔄 تحديث كاش {service}...")
-                    result = check_countries_for_service(service, max_workers=10, force_refresh=True)
-                    logger.info(f"✅ {service}: {len(result)} دولة")
-                    time.sleep(5)
-                except Exception as e:
-                    logger.error(f"❌ خطأ {service}: {e}")
-            logger.info("✅ تم تحديث الكاش، الاستراحة ساعة...")
-            logger.info("=" * 50)
-            time.sleep(3600)
-        except Exception as e:
-            logger.error(f"❌ خطأ في محدّث الكاش: {e}")
-            time.sleep(300)
-
-# ═══════════════════════════════════════════════════════════════
 # 📲 الأزرار الرئيسية
 # ═══════════════════════════════════════════════════════════════
 def get_main_reply_keyboard(user_id=None):
@@ -1226,7 +1285,6 @@ def get_main_reply_keyboard(user_id=None):
     return markup
 
 def get_services_menu():
-    """قائمة الخدمات — بس اللي عندها أرقام متاحة"""
     markup = InlineKeyboardMarkup(row_width=2)
     services_list = [
         ("whatsapp", "📞 واتساب"), ("telegram", "✈️ تلجرام"),
@@ -1238,17 +1296,7 @@ def get_services_menu():
         ("openai", "🤖 OpenAI"), ("tinder", "❤️ تندر"),
     ]
 
-    available_services = []
-    with available_countries_lock:
-        for key, name in services_list:
-            cached = available_countries_cache.get(key, [])
-            if cached and len(cached) > 0:
-                available_services.append((key, name))
-
-    if not available_services:
-        available_services = services_list
-
-    for key, name in available_services:
+    for key, name in services_list:
         try:
             markup.add(InlineKeyboardButton(name, callback_data=f"service_{key}", style="success"))
         except:
@@ -1258,8 +1306,6 @@ def get_services_menu():
 
 def get_owner_panel_text():
     known = load_known_countries()
-    cached_services = len(available_countries_cache)
-    total_countries = sum(len(items) for items in available_countries_cache.values())
     return (
         "╔═══════════════════════════════╗\n"
         "        👑 <b>لوحة المالك</b> 👑\n"
@@ -1270,7 +1316,7 @@ def get_owner_panel_text():
         f"🚫 <b>المحظورون:</b> {len(BANNED)}\n"
         f"📱 <b>الأرقام:</b> {len(load_my_numbers())}\n"
         f"🌍 <b>الدول المكتشفة:</b> {len(known)}\n"
-        f"📊 <b>كاش الخدمات:</b> {cached_services} خدمة ({total_countries} دولة)\n"
+        f"🌍 <b>إجمالي الدول:</b> {len(DEFAULT_TEST_COUNTRIES)}\n"
         f"📨 <b>إجمالي الأكواد:</b> {STATISTICS.get('total_codes', 0)}\n\n"
         "━━━━━━━━━━━━━━━━━━━━━━━━━━\n🎯 اختر من القائمة:"
     )
@@ -1283,14 +1329,7 @@ def get_owner_menu():
         InlineKeyboardButton("📥 آخر الأكواد", callback_data="np_last_codes", style="success")
     )
     markup.row(
-        InlineKeyboardButton("🌍 الدول المكتشفة", callback_data="owner_known_countries", style="success"),
-        InlineKeyboardButton("🔍 فحص الدول الحالي", callback_data="owner_check_cache", style="primary")
-    )
-    markup.row(
-        InlineKeyboardButton("🔄 تحديث الكاش فوراً", callback_data="owner_refresh_cache", style="success")
-    )
-    markup.row(
-        InlineKeyboardButton("🗑 إلغاء تحديث الكاش القديم", callback_data="owner_cancel_cache", style="danger")
+        InlineKeyboardButton("🌍 الدول المكتشفة", callback_data="owner_known_countries", style="success")
     )
     markup.row(InlineKeyboardButton("📣 الإذاعة للمستخدمين", callback_data="owner_broadcast_btn", style="success"))
     markup.row(
@@ -1576,7 +1615,7 @@ def handle_messages(msg):
         return
 
 # ═══════════════════════════════════════════════════════════════
-# 🔥 اختيار خدمة — ✅ التعديل الجوهري هنا يا خالد
+# 🔥 اختيار خدمة — مباشر من الموقع بدون كاش
 # ═══════════════════════════════════════════════════════════════
 @bot.callback_query_handler(func=lambda call: call.data.startswith("service_"))
 def service_selected(call):
@@ -1584,34 +1623,14 @@ def service_selected(call):
     service_name = DEFAULT_SERVICES.get(service_key, service_key)
     service_icon = get_service_icon(service_key)
 
-    # ═══════════════════════════════════════════════════════════════
-    # ✅ التعديل الجوهري: التحقق من الكاش أولاً
-    # لو الكاش موجود ومش قديم (أقل من ساعة)، نستخدمه فوراً
-    # ومنلمسش باقي الخدمات في الكاش
-    # ═══════════════════════════════════════════════════════════════
-    cached_data = []
-    cache_is_fresh = False
-    with available_countries_lock:
-        cached = available_countries_cache.get(service_key, [])
-        if cached:
-            age = time.time() - cached[0].get("timestamp", 0)
-            if age < 3600:
-                cache_is_fresh = True
-                cached_data = [(item["country"], item["number"]) for item in cached]
-    
-    if cache_is_fresh and cached_data:
-        # ✅ الكاش fresh: استخدمه فوراً من غير ما نلمس باقي الخدمات
-        bot.answer_callback_query(call.id, f"⚡ {len(cached_data)} دولة")
-        available = cached_data
-    else:
-        # ⚠️ مفيش كاش أو قديم: نادِ الـ API (بس نحدّث الخدمة دي بس)
-        bot.answer_callback_query(call.id, "🔄 جاري التحديث...")
-        bot.edit_message_text(
-            f"{service_icon} <b>جاري البحث عن الدول المتاحة لـ {service_name}...</b>\n\n"
-            f"⏳ <i>قد يستغرق 5-10 ثواني</i>",
-            call.message.chat.id, call.message.message_id, parse_mode="HTML"
-        )
-        available = check_countries_for_service(service_key, force_refresh=True)
+    bot.answer_callback_query(call.id, "🔄 جاري التحديث...")
+    bot.edit_message_text(
+        f"{service_icon} <b>جاري البحث عن الدول المتاحة لـ {service_name}...</b>\n\n"
+        f"⏳ <i>قد يستغرق 5-15 ثانية</i>",
+        call.message.chat.id, call.message.message_id, parse_mode="HTML"
+    )
+
+    available = check_countries_for_service(service_key)
 
     if not available:
         text = (
@@ -1626,7 +1645,7 @@ def service_selected(call):
         return
 
     markup = InlineKeyboardMarkup(row_width=2)
-    for country_code, number in available[:20]:
+    for country_code, number in available:
         flag = get_flag(country_code)
         cname = get_country_name(country_code)
         markup.add(InlineKeyboardButton(
@@ -1844,136 +1863,6 @@ def owner_known_countries_cb(call):
     markup.add(InlineKeyboardButton("🔙 رجوع", callback_data="owner_panel", style="success"))
     bot.send_message(call.message.chat.id, txt, parse_mode="HTML", reply_markup=markup)
 
-# ═══════════════════════════════════════════════════════════════
-# 🔄 تحديث الكاش فوراً
-# ═══════════════════════════════════════════════════════════════
-@bot.callback_query_handler(func=lambda call: call.data == "owner_refresh_cache")
-def owner_refresh_cache_cb(call):
-    if call.from_user.id != MAIN_ADMIN_ID: return
-    bot.answer_callback_query(call.id, "🔄 جاري تحديث الكاش...")
-
-    def do_refresh():
-        msg = bot.send_message(call.message.chat.id,
-            "🔄 <b>بدأ تحديث الكاش...</b>\n\n"
-            "⏳ جاري مسح البيانات القديمة وتحديث كل الخدمات من الموقع.\n"
-            "استنى شوية...", parse_mode="HTML")
-
-        results_per_service = {}
-        total_countries = 0
-        services_done = 0
-
-        for service in DEFAULT_SERVICES.keys():
-            try:
-                result = check_countries_for_service(service, max_workers=10, force_refresh=True)
-                count = len(result) if result else 0
-                results_per_service[service] = count
-                if count > 0:
-                    total_countries += count
-                    services_done += 1
-                time.sleep(2)
-            except Exception as e:
-                logger.error(f"❌ خطأ {service}: {e}")
-                results_per_service[service] = 0
-
-        try:
-            bot.delete_message(msg.chat.id, msg.message_id)
-        except: pass
-
-        report = "✅ <b>تم تحديث الدول كاملة!</b>\n\n"
-        report += "━━━━━━━━━━━━━━━━━━━━━\n"
-        report += f"📊 <b>الخدمات المحدثة:</b> {services_done}\n"
-        report += f"🌍 <b>إجمالي الدول:</b> {total_countries}\n"
-        report += "━━━━━━━━━━━━━━━━━━━━━\n\n"
-        report += "📋 <b>تفاصيل الدول لكل خدمة:</b>\n\n"
-
-        for service, count in results_per_service.items():
-            service_name = DEFAULT_SERVICES.get(service, service)
-            service_icon = get_service_icon(service)
-            if count > 0:
-                report += f"{service_icon} <b>{service_name}:</b> {count} دولة\n"
-            else:
-                report += f"❌ <b>{service_name}:</b> لا يوجد\n"
-
-        report += "\n💾 تم مسح البيانات القديمة وحفظ الجديدة."
-
-        bot.send_message(call.message.chat.id, report, parse_mode="HTML")
-
-    Thread(target=do_refresh, daemon=True).start()
-
-# ═══════════════════════════════════════════════════════════════
-# 🗑 إلغاء تحديث الكاش القديم
-# ═══════════════════════════════════════════════════════════════
-@bot.callback_query_handler(func=lambda call: call.data == "owner_cancel_cache")
-def owner_cancel_cache_cb(call):
-    if call.from_user.id != MAIN_ADMIN_ID: return
-    bot.answer_callback_query(call.id, "🗑 جاري إلغاء الكاش...")
-
-    def do_cancel():
-        msg = bot.send_message(call.message.chat.id,
-            "🗑 <b>جاري إلغاء كل التحديثات القديمة...</b>", parse_mode="HTML")
-
-        with available_countries_lock:
-            count_services = len(available_countries_cache)
-            count_countries = sum(len(items) for items in available_countries_cache.values())
-            available_countries_cache.clear()
-
-        save_available_cache()
-
-        try:
-            bot.delete_message(msg.chat.id, msg.message_id)
-        except: pass
-
-        final_text = (
-            "✅ <b>تم إلغاء كل التحديثات القديمة!</b>\n\n"
-            "━━━━━━━━━━━━━━━━━━━━━\n"
-            f"🗑 <b>الخدمات الملغاة:</b> {count_services}\n"
-            f"🌍 <b>الدول الملغاة:</b> {count_countries}\n"
-            "━━━━━━━━━━━━━━━━━━━━━\n\n"
-            "💡 الكاش دلوقتي فاضي. اضغط <b>🔄 تحديث الكاش فوراً</b> عشان تجيب الدول الجديدة."
-        )
-        bot.send_message(call.message.chat.id, final_text, parse_mode="HTML")
-
-    Thread(target=do_cancel, daemon=True).start()
-
-# ═══════════════════════════════════════════════════════════════
-# 🔍 فحص الدول الحالي
-# ═══════════════════════════════════════════════════════════════
-@bot.callback_query_handler(func=lambda call: call.data == "owner_check_cache")
-def owner_check_cache_cb(call):
-    if call.from_user.id != MAIN_ADMIN_ID: return
-    with available_countries_lock:
-        if not available_countries_cache:
-            bot.answer_callback_query(call.id, "⚠️ الكاش فاضي! اضغط تحديث الكاش الأول", show_alert=True)
-            return
-        total = sum(len(items) for items in available_countries_cache.values())
-        services = len(available_countries_cache)
-
-    txt = f"🔍 <b>فحص الدول الحالي</b>\n\n"
-    txt += f"━━━━━━━━━━━━━━━━━━━━━\n"
-    txt += f"📊 <b>الخدمات:</b> {services}\n"
-    txt += f"🌍 <b>إجمالي الدول:</b> {total}\n"
-    txt += f"━━━━━━━━━━━━━━━━━━━━━\n\n"
-
-    with available_countries_lock:
-        for service, items in available_countries_cache.items():
-            service_name = DEFAULT_SERVICES.get(service, service)
-            service_icon = get_service_icon(service)
-            txt += f"{service_icon} <b>{service_name}:</b> {len(items)} دولة\n"
-            for item in items[:20]:
-                country = item.get("country", "?")
-                flag = get_flag(country)
-                cname = get_country_name(country)
-                txt += f"   {flag} {cname}\n"
-            txt += "\n"
-
-    markup = InlineKeyboardMarkup()
-    markup.add(InlineKeyboardButton("🔙 رجوع", callback_data="owner_panel", style="success"))
-    try:
-        bot.edit_message_text(txt, call.message.chat.id, call.message.message_id,
-                              parse_mode="HTML", reply_markup=markup)
-    except:
-        bot.send_message(call.message.chat.id, txt, parse_mode="HTML", reply_markup=markup)
-
 @bot.callback_query_handler(func=lambda call: call.data == "owner_add_admin_btn")
 def owner_add_admin_cb(call):
     if call.from_user.id != MAIN_ADMIN_ID: return
@@ -2028,14 +1917,13 @@ def owner_list_banned_cb(call):
 def owner_full_stats_cb(call):
     if call.from_user.id != MAIN_ADMIN_ID: return
     known = load_known_countries()
-    total_cache_countries = sum(len(items) for items in available_countries_cache.values())
     txt = (f"📊 <b>الإحصائيات</b>\n\n"
            f"👥 المستخدمون: {len(USERS)}\n"
            f"🔧 المشرفون: {len(ADMINS)}\n"
            f"🚫 المحظورون: {len(BANNED)}\n"
            f"📱 الأرقام: {len(load_my_numbers())}\n"
            f"🌍 الدول المكتشفة: {len(known)}\n"
-           f"📊 كاش: {len(available_countries_cache)} خدمة ({total_cache_countries} دولة)\n"
+           f"🌍 إجمالي الدول: {len(DEFAULT_TEST_COUNTRIES)}\n"
            f"📨 إجمالي الأكواد: {STATISTICS.get('total_codes', 0)}")
     bot.send_message(call.message.chat.id, txt, parse_mode="HTML")
 
@@ -2169,9 +2057,6 @@ if __name__ == "__main__":
     load_data()
     load_available_cache()
     logger.info("🚀 بدء التشغيل...")
-
-    Thread(target=cache_updater_loop, daemon=True).start()
-    logger.info("✅ محدّث الكاش شغال")
 
     if NUMBERPANEL_API_TOKEN:
         Thread(target=np_check_new_code_loop, daemon=True).start()
