@@ -38,11 +38,11 @@ NUMBERPANEL_API_TOKEN = os.environ.get("NUMBERPANEL_API_TOKEN", "")
 BOT_USERNAME = os.environ.get("BOT_USERNAME", "")
 
 if not BOT_TOKEN:
-    raise ValueError("BOT_TOKEN غير موجود في Environment Variables!")
+    raise ValueError("BOT_TOKEN غير موجود!")
 if MAIN_ADMIN_ID == 0:
-    raise ValueError("MAIN_ADMIN_ID غير موجود في Environment Variables!")
+    raise ValueError("MAIN_ADMIN_ID غير موجود!")
 if not NUMBERPANEL_API_TOKEN:
-    raise ValueError("NUMBERPANEL_API_TOKEN غير موجود في Environment Variables!")
+    raise ValueError("NUMBERPANEL_API_TOKEN غير موجود!")
 
 # ═══════════════════════════════════════════════════════════════
 # 📝 Logging
@@ -69,7 +69,6 @@ code_owners_lock = Lock()
 np_last_code_lock = Lock()
 known_countries_lock = Lock()
 available_countries_lock = Lock()
-cache_update_lock = Lock()
 
 # ═══════════════════════════════════════════════════════════════
 # 📱 ملفات
@@ -263,13 +262,13 @@ COUNTRIES_NAMES_AR = {
     "ZM": "🇿🇲 زامبيا", "ZW": "🇿🇼 زيمبابوي",
 }
 
+# ═══════════════════════════════════════════════════════════════
+# ✨ الخدمات المتاحة (واتساب بس)
+# ═══════════════════════════════════════════════════════════════
 DEFAULT_SERVICES = {
-    "whatsapp": "واتساب", "telegram": "تلجرام", "facebook": "فيسبوك",
-    "instagram": "انستقرام", "tiktok": "تيك توك", "google": "جوجل",
-    "netflix": "نتفليكس", "twitter": "تويتر", "discord": "ديسكورد",
-    "uber": "أوبر", "amazon": "أمازون", "paypal": "باي بال",
-    "openai": "OpenAI", "tinder": "تندر",
+    "whatsapp": "واتساب",
 }
+# ═══════════════════════════════════════════════════════════════
 
 # ═══════════════════════════════════════════════════════════════
 # 🌍 الدول المكتشفة
@@ -321,6 +320,8 @@ def load_available_cache():
                     data = json.load(f)
                     available_countries_cache = data
                     logger.info(f"📂 كاش: {len(data)} خدمة")
+                    for svc, items in data.items():
+                        logger.info(f"   📌 {svc}: {len(items)} دولة محفوظة")
             except Exception as e:
                 logger.error(f"خطأ تحميل الكاش: {e}")
                 available_countries_cache = {}
@@ -1255,6 +1256,60 @@ def np_check_new_code_loop():
         time.sleep(1)
 
 # ═══════════════════════════════════════════════════════════════
+# 🔥 التحديث التلقائي (كل ساعة) — واتساب بس
+# ═══════════════════════════════════════════════════════════════
+def cache_updater_loop():
+    """
+    كل ساعة: يفحص واتساب، ويضيف كل دولة جديدة للكاش المحفوظ.
+    مش بيمسح حاجة — بس بيضيف.
+    """
+    logger.info("🔄 بدء محدّث الكاش التلقائي (واتساب بس)...")
+    time.sleep(30)  # استنى البوت يقوم
+
+    while True:
+        try:
+            logger.info("=" * 50)
+            logger.info("🔄 بدء دورة تحديث الكاش (واتساب)...")
+
+            # ═══ 1. الفحص المباشر من الموقع ═══
+            new_results = check_countries_for_service("whatsapp", max_workers=15)
+
+            if new_results:
+                with available_countries_lock:
+                    # ═══ 2. الدمج مع الكاش المحفوظ (من غير مسح) ═══
+                    existing = {}
+                    for item in available_countries_cache.get("whatsapp", []):
+                        c = item.get("country")
+                        if c:
+                            existing[c] = item
+
+                    # ضيف الجديد
+                    for country_code, number in new_results:
+                        existing[country_code] = {
+                            "country": country_code,
+                            "number": number,
+                            "timestamp": time.time()
+                        }
+
+                    # احفظ الكل
+                    available_countries_cache["whatsapp"] = list(existing.values())
+                    total_saved = len(available_countries_cache["whatsapp"])
+
+                save_available_cache()
+                logger.info(f"✅ تم التحديث — إجمالي الدول المحفوظة: {total_saved}")
+                logger.info(f"📌 الدول: {sorted(existing.keys())}")
+            else:
+                logger.warning("⚠️ الفحص رجع 0 دولة — الكاش القديم هيفضل زي ما هو")
+
+            logger.info("⏰ الاستراحة ساعة...")
+            logger.info("=" * 50)
+            time.sleep(3600)
+
+        except Exception as e:
+            logger.error(f"❌ خطأ في محدّث الكاش: {e}")
+            time.sleep(300)
+
+# ═══════════════════════════════════════════════════════════════
 # 📲 الأزرار الرئيسية
 # ═══════════════════════════════════════════════════════════════
 def get_main_reply_keyboard(user_id=None):
@@ -1281,25 +1336,15 @@ def get_main_reply_keyboard(user_id=None):
     return markup
 
 def get_services_menu():
-    markup = InlineKeyboardMarkup(row_width=2)
-    services_list = [
-        ("whatsapp", "📞 واتساب"), ("telegram", "✈️ تلجرام"),
-        ("facebook", "📘 فيسبوك"), ("instagram", "📸 انستقرام"),
-        ("tiktok", "🎵 تيك توك"), ("google", "🔍 جوجل"),
-        ("netflix", "🎬 نتفليكس"), ("twitter", "🐦 تويتر"),
-        ("discord", "🎮 ديسكورد"), ("uber", "🚗 أوبر"),
-        ("amazon", "📦 أمازون"), ("paypal", "💳 باي بال"),
-        ("openai", "🤖 OpenAI"), ("tinder", "❤️ تندر"),
-    ]
-    for key, name in services_list:
-        try:
-            markup.add(InlineKeyboardButton(name, callback_data=f"service_{key}", style="success"))
-        except:
-            markup.add(InlineKeyboardButton(name, callback_data=f"service_{key}"))
+    """قائمة الخدمات — واتساب بس"""
+    markup = InlineKeyboardMarkup(row_width=1)
+    markup.add(InlineKeyboardButton("📞 واتساب", callback_data="service_whatsapp", style="success"))
     return markup
 
 def get_owner_panel_text():
     known = load_known_countries()
+    with available_countries_lock:
+        wa_count = len(available_countries_cache.get("whatsapp", []))
     return (
         "╔═══════════════════════════════╗\n"
         "        👑 <b>لوحة المالك</b> 👑\n"
@@ -1310,7 +1355,7 @@ def get_owner_panel_text():
         f"🚫 <b>المحظورون:</b> {len(BANNED)}\n"
         f"📱 <b>الأرقام:</b> {len(load_my_numbers())}\n"
         f"🌍 <b>الدول المكتشفة:</b> {len(known)}\n"
-        f"🌍 <b>إجمالي الدول:</b> {len(DEFAULT_TEST_COUNTRIES)}\n"
+        f"📞 <b>دول واتساب المحفوظة:</b> {wa_count}\n"
         f"📨 <b>إجمالي الأكواد:</b> {STATISTICS.get('total_codes', 0)}\n\n"
         "━━━━━━━━━━━━━━━━━━━━━━━━━━\n🎯 اختر من القائمة:"
     )
@@ -1323,7 +1368,8 @@ def get_owner_menu():
         InlineKeyboardButton("📥 آخر الأكواد", callback_data="np_last_codes", style="success")
     )
     markup.row(
-        InlineKeyboardButton("🌍 الدول المكتشفة", callback_data="owner_known_countries", style="success")
+        InlineKeyboardButton("🌍 الدول المكتشفة", callback_data="owner_known_countries", style="success"),
+        InlineKeyboardButton("📞 دول واتساب", callback_data="owner_wa_countries", style="primary")
     )
     markup.row(InlineKeyboardButton("📣 الإذاعة للمستخدمين", callback_data="owner_broadcast_btn", style="success"))
     markup.row(
@@ -1609,7 +1655,7 @@ def handle_messages(msg):
         return
 
 # ═══════════════════════════════════════════════════════════════
-# 🔥 اختيار خدمة — مباشر من الموقع بدون كاش
+# 🔥 اختيار خدمة (واتساب بس) — من الكاش المحفوظ
 # ═══════════════════════════════════════════════════════════════
 @bot.callback_query_handler(func=lambda call: call.data.startswith("service_"))
 def service_selected(call):
@@ -1617,22 +1663,36 @@ def service_selected(call):
     service_name = DEFAULT_SERVICES.get(service_key, service_key)
     service_icon = get_service_icon(service_key)
 
-    bot.answer_callback_query(call.id, "🔄 جاري التحديث...")
-    bot.edit_message_text(
-        f"{service_icon} <b>جاري البحث عن الدول المتاحة لـ {service_name}...</b>\n\n"
-        f"⏳ <i>قد يستغرق 5-15 ثانية</i>",
-        call.message.chat.id, call.message.message_id, parse_mode="HTML"
-    )
+    # ═══ استخدم الكاش المحفوظ فوراً ═══
+    with available_countries_lock:
+        cached = available_countries_cache.get(service_key, [])
 
-    available = check_countries_for_service(service_key)
+    if cached:
+        bot.answer_callback_query(call.id, f"⚡ {len(cached)} دولة")
+        available = [(item["country"], item["number"]) for item in cached]
+    else:
+        # لو الكاش فاضي، اعمل فحص مباشر
+        bot.answer_callback_query(call.id, "🔄 جاري الفحص الأول...")
+        bot.edit_message_text(
+            f"{service_icon} <b>جاري البحث عن الدول المتاحة لـ {service_name}...</b>\n\n"
+            f"⏳ <i>قد يستغرق 5-15 ثانية</i>",
+            call.message.chat.id, call.message.message_id, parse_mode="HTML"
+        )
+        available = check_countries_for_service(service_key)
+        if available:
+            now = time.time()
+            cache_items = [{"country": c, "number": n, "timestamp": now} for c, n in available]
+            with available_countries_lock:
+                available_countries_cache[service_key] = cache_items
+            save_available_cache()
 
     if not available:
         text = (
             f"❌ <b>{service_name} غير متاح حالياً</b>\n\n"
-            f"⚠️ لا توجد أرقام {service_name} في الوقت الحالي"
+            f"⚠️ جاري المحاولة في الخلفية، هتظهر الدول قريباً"
         )
         markup = InlineKeyboardMarkup(row_width=1)
-        markup.add(InlineKeyboardButton("🔄 جرب خدمة أخرى", callback_data="request_new_number", style="success"))
+        markup.add(InlineKeyboardButton("🔄 حاول تاني", callback_data=f"service_{service_key}", style="success"))
         markup.add(InlineKeyboardButton("🔗 جروب البوت", url=GROUP_LINK, style="success"))
         bot.edit_message_text(text, call.message.chat.id, call.message.message_id,
                               parse_mode="HTML", reply_markup=markup)
@@ -1648,7 +1708,7 @@ def service_selected(call):
             style="success"
         ))
 
-    markup.add(InlineKeyboardButton("🔄 جرب خدمة أخرى", callback_data="request_new_number", style="success"))
+    markup.add(InlineKeyboardButton("🔄 حاول تاني", callback_data=f"service_{service_key}", style="success"))
     markup.add(InlineKeyboardButton("🔗 جروب البوت", url=GROUP_LINK, style="success"))
 
     text = f"{service_icon} <b>{service_name} متاح في {len(available)} دولة</b>\n\n🎯 <b>اختر الدولة:</b>"
@@ -1693,7 +1753,6 @@ def pick_country_cb(call):
     text = f"❌ <b>فشل الحصول على رقم {service_name}</b>\n\n💡 جرب دولة تانية"
     markup = InlineKeyboardMarkup(row_width=1)
     markup.add(InlineKeyboardButton("🔄 جرب تاني", callback_data=f"service_{service_key}", style="success"))
-    markup.add(InlineKeyboardButton("📲 خدمة أخرى", callback_data="request_new_number", style="success"))
     markup.add(InlineKeyboardButton("🔗 جروب البوت", url=GROUP_LINK, style="success"))
     bot.edit_message_text(text, call.message.chat.id, call.message.message_id,
                           parse_mode="HTML", reply_markup=markup)
@@ -1705,9 +1764,6 @@ def new_number_cb(call):
     service_key = parts[0]
     country_code = parts[1] if len(parts) > 1 else None
 
-    service_name = DEFAULT_SERVICES.get(service_key, service_key)
-    service_icon = get_service_icon(service_key)
-
     if not country_code:
         bot.edit_message_text(
             "🎯 <b>اختر الخدمة:</b>",
@@ -1715,49 +1771,8 @@ def new_number_cb(call):
             parse_mode="HTML", reply_markup=get_services_menu()
         )
         return
-
-    cname = get_country_name(country_code)
-
-    bot.edit_message_text(
-        f"{service_icon} <b>جاري طلب رقم {service_name} جديد...</b>\n\n"
-        f"🌍 من: {cname}",
-        call.message.chat.id, call.message.message_id, parse_mode="HTML"
-    )
-
-    success, number = request_number_from_country(service_key, country_code)
-
-    if success and number:
-        cleaned = clean_number(number)
-        if cleaned and len(cleaned) >= 8:
-            register_number_owner(cleaned, user_id,
-                                  call.from_user.username or "",
-                                  call.from_user.first_name or "مستخدم",
-                                  service_key, country_code)
-            add_my_number(cleaned, label=f"{service_key} - {country_code}", added_by=user_id)
-
-            text, markup = build_number_success_message(service_key, country_code, cleaned)
-            bot.edit_message_text(text, call.message.chat.id, call.message.message_id,
-                                  parse_mode="HTML", reply_markup=markup)
-            return
-
-    text = (
-        f"❌ <b>لا توجد أرقام {service_name} جديدة من {cname} حالياً</b>\n\n"
-        f"💡 جرب دولة أخرى"
-    )
-    markup = InlineKeyboardMarkup(row_width=1)
-    markup.add(InlineKeyboardButton("🌍 اختر دولة أخرى", callback_data=f"service_{service_key}", style="success"))
-    markup.add(InlineKeyboardButton("📲 خدمة أخرى", callback_data="request_new_number", style="success"))
-    markup.add(InlineKeyboardButton("🔗 جروب البوت", url=GROUP_LINK, style="success"))
-    bot.edit_message_text(text, call.message.chat.id, call.message.message_id,
-                          parse_mode="HTML", reply_markup=markup)
-
-@bot.callback_query_handler(func=lambda call: call.data == "request_new_number")
-def request_new_number_cb(call):
-    bot.edit_message_text(
-        "🎯 <b>اختر الخدمة:</b>",
-        call.message.chat.id, call.message.message_id,
-        parse_mode="HTML", reply_markup=get_services_menu()
-    )
+    # نفس منطق pick_country
+    pick_country_cb(call)
 
 @bot.callback_query_handler(func=lambda call: call.data.startswith("copy_num_"))
 def copy_num_cb(call):
@@ -1857,6 +1872,29 @@ def owner_known_countries_cb(call):
     markup.add(InlineKeyboardButton("🔙 رجوع", callback_data="owner_panel", style="success"))
     bot.send_message(call.message.chat.id, txt, parse_mode="HTML", reply_markup=markup)
 
+@bot.callback_query_handler(func=lambda call: call.data == "owner_wa_countries")
+def owner_wa_countries_cb(call):
+    """عرض دول واتساب المحفوظة في الكاش"""
+    if call.from_user.id != MAIN_ADMIN_ID: return
+    with available_countries_lock:
+        wa_list = available_countries_cache.get("whatsapp", [])
+    if not wa_list:
+        bot.answer_callback_query(call.id, "⚠️ لسه مفيش دول محفوظة", show_alert=True)
+        return
+    txt = f"📞 <b>دول واتساب المحفوظة ({len(wa_list)})</b>\n\n"
+    for item in sorted(wa_list, key=lambda x: x.get("country", "")):
+        code = item.get("country", "?")
+        flag = get_flag(code)
+        name = COUNTRIES_NAMES_AR.get(code, code)
+        txt += f"{flag} <code>{code}</code> — {name}\n"
+    markup = InlineKeyboardMarkup()
+    markup.add(InlineKeyboardButton("🔙 رجوع", callback_data="owner_panel", style="success"))
+    try:
+        bot.edit_message_text(txt, call.message.chat.id, call.message.message_id,
+                              parse_mode="HTML", reply_markup=markup)
+    except:
+        bot.send_message(call.message.chat.id, txt, parse_mode="HTML", reply_markup=markup)
+
 @bot.callback_query_handler(func=lambda call: call.data == "owner_add_admin_btn")
 def owner_add_admin_cb(call):
     if call.from_user.id != MAIN_ADMIN_ID: return
@@ -1911,13 +1949,15 @@ def owner_list_banned_cb(call):
 def owner_full_stats_cb(call):
     if call.from_user.id != MAIN_ADMIN_ID: return
     known = load_known_countries()
+    with available_countries_lock:
+        wa_count = len(available_countries_cache.get("whatsapp", []))
     txt = (f"📊 <b>الإحصائيات</b>\n\n"
            f"👥 المستخدمون: {len(USERS)}\n"
            f"🔧 المشرفون: {len(ADMINS)}\n"
            f"🚫 المحظورون: {len(BANNED)}\n"
            f"📱 الأرقام: {len(load_my_numbers())}\n"
            f"🌍 الدول المكتشفة: {len(known)}\n"
-           f"🌍 إجمالي الدول: {len(DEFAULT_TEST_COUNTRIES)}\n"
+           f"📞 دول واتساب المحفوظة: {wa_count}\n"
            f"📨 إجمالي الأكواد: {STATISTICS.get('total_codes', 0)}")
     bot.send_message(call.message.chat.id, txt, parse_mode="HTML")
 
@@ -2052,6 +2092,11 @@ if __name__ == "__main__":
     load_available_cache()
     logger.info("🚀 بدء التشغيل...")
 
+    # ═══ محدّث الكاش التلقائي (كل ساعة) ═══
+    Thread(target=cache_updater_loop, daemon=True).start()
+    logger.info("✅ محدّث الكاش التلقائي شغال (كل ساعة)")
+
+    # ═══ فحص الأكواد الجديدة ═══
     if NUMBERPANEL_API_TOKEN:
         Thread(target=np_check_new_code_loop, daemon=True).start()
         logger.info("✅ فحص NumberPanel كل ثانية")
