@@ -95,53 +95,43 @@ COUNTRY_PREFIXES = {
     "PH": "63", "MY": "60", "SG": "65", "TH": "66", "VN": "84",
     "BD": "880", "LK": "94", "NP": "977", "CN": "86", "JP": "81",
     "KR": "82", "AU": "61", "NZ": "64", "BR": "55", "AR": "54",
-    "MX": "52", "CA": "1", "CL": "56", "CO": "57", "PE": "51",
-    "VE": "58", "EC": "593", "DE": "49", "FR": "33", "IT": "39",
-    "ES": "34", "PT": "351", "NL": "31", "BE": "32", "CH": "41",
-    "AT": "43", "SE": "46", "NO": "47", "DK": "45", "FI": "358",
-    "IE": "353", "GR": "30", "PL": "48", "RO": "40", "BG": "359",
-    "CZ": "420", "SK": "421", "HU": "36", "UA": "380", "RU": "7",
-    "NG": "234", "KE": "254", "GH": "233", "ZA": "27", "UG": "256",
-    "MZ": "258", "ZM": "260", "ZW": "263", "AO": "244", "CM": "237",
-    "SN": "221", "CI": "225", "GN": "224", "ML": "223", "NE": "227",
-    "TD": "235", "MR": "222", "CV": "238", "GM": "220", "SL": "232",
-    "LR": "231", "BJ": "229", "GA": "241", "CG": "242", "CD": "243",
-    "GQ": "240", "ST": "239", "ET": "251", "SO": "252", "DJ": "253",
-    "ER": "291", "SS": "211", "RW": "250", "BI": "257", "MG": "261",
-    "MU": "230", "SC": "248", "KM": "269", "MW": "265", "LS": "266",
-    "SZ": "268", "BW": "267", "NA": "264",
-    "KZ": "7", "UZ": "998", "TM": "993", "TJ": "992", "KG": "996",
-    "AF": "93", "IR": "98", "MN": "976", "MM": "95", "KH": "855",
-    "LA": "856", "BN": "673", "MV": "960", "BT": "975",
-    "HT": "509", "DO": "1", "CU": "53", "JM": "1", "TT": "1",
-    "BS": "1", "BB": "1", "BZ": "501", "GT": "502", "HN": "504",
-    "SV": "503", "NI": "505", "CR": "506", "PA": "507",
-    "BO": "591", "PY": "595", "UY": "598", "GY": "592", "SR": "597",
-    "FJ": "679", "PG": "675", "SB": "677", "VU": "678", "WS": "685",
-    "TO": "676", "TV": "688", "KI": "686", "NR": "674", "PW": "680",
-    "FM": "691", "MH": "692",
+    "MX": "52", "CA": "1", "CL": "56", "CO": "57", "VE": "58",
+    "EC": "593", "DE": "49", "FR": "33", "IT": "39", "ES": "34",
+    "PT": "351", "NL": "31", "BE": "32", "CH": "41", "AT": "43",
+    "SE": "46", "NO": "47", "DK": "45", "FI": "358", "IE": "353",
+    "GR": "30", "PL": "48", "RO": "40", "BG": "359", "CZ": "420",
+    "SK": "421", "HU": "36", "UA": "380", "NG": "234", "KE": "254",
+    "GH": "233", "ZA": "27", "UG": "256", "MZ": "258", "ZM": "260",
+    "ZW": "263", "AO": "244", "CM": "237", "SN": "221", "CI": "225",
+    "GN": "224", "ML": "223", "NE": "227", "TD": "235", "MR": "222",
+    "CV": "238", "GM": "220", "SL": "232", "LR": "231", "BJ": "229",
+    "GA": "241", "CG": "242", "CD": "243", "GQ": "240", "ST": "239",
+    "ET": "251", "SO": "252", "DJ": "253", "ER": "291", "SS": "211",
+    "RW": "250", "BI": "257", "MG": "261", "MU": "230", "SC": "248",
+    "KM": "269", "MW": "265", "LS": "266", "SZ": "268", "BW": "267",
+    "NA": "264", "KZ": "7", "UZ": "998", "TM": "993", "TJ": "992",
+    "KG": "996", "AF": "93", "IR": "98", "MN": "976", "MM": "95",
+    "KH": "855", "LA": "856", "BN": "673", "MV": "960", "BT": "975",
+    "DO": "1", "CU": "53", "JM": "1", "TT": "1", "BS": "1",
+    "BB": "1", "BZ": "501", "GT": "502", "HN": "504", "SV": "503",
+    "NI": "505", "CR": "506", "PA": "507", "BO": "591", "PY": "595",
+    "UY": "598", "GY": "592", "SR": "597", "FJ": "679", "PG": "675",
+    "SB": "677", "VU": "678", "WS": "685", "TO": "676", "TV": "688",
+    "KI": "686", "NR": "674", "PW": "680", "FM": "691", "MH": "692",
     "BY": "375", "MD": "373", "AL": "355", "MK": "389", "ME": "382",
     "RS": "381", "BA": "387", "HR": "385", "SI": "386", "XK": "383",
     "MT": "356", "CY": "357", "IS": "354", "LU": "352", "LI": "423",
     "AD": "376", "MC": "377", "SM": "378", "VA": "379",
     "EE": "372", "LV": "371", "LT": "370",
-    "GL": "299", "FO": "298",
 }
 
 def number_matches_country(number, country_code):
-    """
-    التأكد إن الرقم من الدولة دي بالظبط
-    """
     cleaned = re.sub(r'\D', '', str(number))
     if not cleaned:
         return False
-
-    # ═══ الطريقة 1: من الجدول ═══
     prefix = COUNTRY_PREFIXES.get(country_code)
     if prefix:
         return cleaned.startswith(prefix)
-
-    # ═══ الطريقة 2: من phonenumbers ═══
     try:
         cleaned_with_plus = '+' + cleaned if not cleaned.startswith('+') else cleaned
         parsed = phonenumbers.parse(cleaned_with_plus, None)
@@ -181,15 +171,11 @@ def clean_number(num_str):
     return re.sub(r'\D', '', str(num_str))
 
 def extract_otp(msg):
-    """استخراج الكود من الرسالة (زي forward.py)"""
     if not msg:
         return None
     otp_match = re.search(r'\d{3}[-\s]?\d{3,4}|\d{4,8}', str(msg))
     return otp_match.group(0) if otp_match else None
 
-# ═══════════════════════════════════════════════════════════════
-# 🗑️ حذف تلقائي
-# ═══════════════════════════════════════════════════════════════
 def auto_delete_message(chat_id, message_id, delay=300):
     def delete():
         time.sleep(delay)
@@ -339,9 +325,6 @@ DEFAULT_SERVICES = {
     "whatsapp": "واتساب",
 }
 
-# ═══════════════════════════════════════════════════════════════
-# 🌍 الدول المكتشفة
-# ═══════════════════════════════════════════════════════════════
 def load_known_countries():
     with known_countries_lock:
         if os.path.exists(KNOWN_COUNTRIES_FILE):
@@ -377,9 +360,6 @@ def get_all_test_countries():
         all_countries.add(code)
     return list(all_countries)
 
-# ═══════════════════════════════════════════════════════════════
-# 💾 كاش الدول المتاحة
-# ═══════════════════════════════════════════════════════════════
 def load_available_cache():
     global available_countries_cache
     with available_countries_lock:
@@ -389,8 +369,6 @@ def load_available_cache():
                     data = json.load(f)
                     available_countries_cache = data
                     logger.info(f"📂 كاش: {len(data)} خدمة")
-                    for svc, items in data.items():
-                        logger.info(f"   📌 {svc}: {len(items)} دولة محفوظة")
             except Exception as e:
                 logger.error(f"خطأ تحميل الكاش: {e}")
                 available_countries_cache = {}
@@ -403,9 +381,6 @@ def save_available_cache():
         except Exception as e:
             logger.error(f"خطأ حفظ الكاش: {e}")
 
-# ═══════════════════════════════════════════════════════════════
-# 📊 مالكي الأرقام
-# ═══════════════════════════════════════════════════════════════
 def load_code_owners():
     with code_owners_lock:
         if os.path.exists(CODE_OWNERS_FILE):
@@ -440,9 +415,6 @@ def get_number_owner(number):
     cleaned = re.sub(r'\D', '', str(number))
     return owners.get(cleaned)
 
-# ═══════════════════════════════════════════════════════════════
-# 💾 الملفات
-# ═══════════════════════════════════════════════════════════════
 COUNTRIES_FILE = "countriesi.json"
 CHANNELS_FILE = "channelsi.json"
 USERS_FILE = "usersiy.json"
@@ -637,9 +609,6 @@ def extract_from_message(raw_text):
             return match.group(1), text
     return None, text
 
-# ═══════════════════════════════════════════════════════════════
-# 💾 تحميل/حفظ
-# ═══════════════════════════════════════════════════════════════
 def load_data():
     global COUNTRIES, CHANNELS, USERS, ADMINS, BANNED, OTP_GROUP, GROUPS, REFERRALS, NUMBERS_ADMINS
     if os.path.exists(COUNTRIES_FILE):
@@ -745,9 +714,6 @@ def load_referral_settings():
         except: pass
     return DEFAULT_REFERRAL_SETTINGS.copy()
 
-# ═══════════════════════════════════════════════════════════════
-# 💰 الإحالات
-# ═══════════════════════════════════════════════════════════════
 def generate_referral_code(user_id):
     import hashlib
     hash_input = f"{user_id}_{datetime.now().timestamp()}"
@@ -819,9 +785,6 @@ def add_code_bonus(user_id):
             except: pass
     save_referrals(REFERRALS)
 
-# ═══════════════════════════════════════════════════════════════
-# 📱 NumberPanel Files
-# ═══════════════════════════════════════════════════════════════
 def load_my_numbers():
     with my_numbers_lock:
         if os.path.exists(MY_NUMBERS_FILE):
@@ -907,9 +870,6 @@ def save_collected_codes():
         with open(COLLECTED_CODES_FILE, 'w', encoding='utf-8') as f:
             json.dump(collected_codes, f, indent=2, ensure_ascii=False)
 
-# ═══════════════════════════════════════════════════════════════
-# 🌐 NumberPanel API
-# ═══════════════════════════════════════════════════════════════
 NUMBERPANEL_BASE = f"{NUMBERPANEL_API_URL.rstrip('/')}/api"
 
 def load_np_last_code():
@@ -928,12 +888,8 @@ def save_np_last_code(data):
                 json.dump(data, f, indent=2, ensure_ascii=False)
         except: pass
 
-# ═══════════════════════════════════════════════════════════════
-# ✅ جلب آخر 20 كود
-# ═══════════════════════════════════════════════════════════════
 def np_get_latest_codes():
-    """✅ جلب آخر 20 كود بس من الموقع"""
-    url = f"{NUMBERPANEL_BASE}/otp?count=20"
+    url = f"{NUMBERPANEL_BASE}/otp?count=200"
     try:
         r = requests.get(url, timeout=15)
         if r.status_code != 200:
@@ -951,24 +907,72 @@ def np_get_latest_codes():
         logger.error(f"❌ خطأ في الاتصال: {e}")
         return []
 
-# ═══════════════════════════════════════════════════════════════
-# ✅ البحث الصارم عن رقم من دولة معينة
-# ═══════════════════════════════════════════════════════════════
+def np_request_number(service, country):
+    """طلب رقم جديد من الموقع - POST /api/request_number"""
+    url = f"{NUMBERPANEL_BASE}/request_number"
+    headers = {
+        "Authorization": f"Bearer {NUMBERPANEL_API_TOKEN}",
+        "Content-Type": "application/json",
+        "Accept": "application/json",
+    }
+    payloads = [
+        {"service": service, "country": country},
+        {"service": service, "country_code": country},
+        {"app": service, "country": country},
+        {"app": service, "country_code": country},
+    ]
+    for payload in payloads:
+        try:
+            r = requests.post(url, json=payload, headers=headers, timeout=25)
+            logger.info(f"📡 request_number: status={r.status_code}, payload={payload}")
+            if r.status_code != 200:
+                continue
+            try:
+                data = r.json()
+            except:
+                continue
+            if isinstance(data, dict):
+                if data.get("success") is False:
+                    logger.warning(f"⚠️ request_number فشل: {data.get('message')}")
+                    continue
+                number = (data.get("number") or data.get("phone") or
+                          data.get("num") or data.get("msisdn") or
+                          data.get("phone_number"))
+                if number:
+                    return True, str(number)
+                if "data" in data and isinstance(data["data"], dict):
+                    number = (data["data"].get("number") or data["data"].get("phone"))
+                    if number:
+                        return True, str(number)
+            elif isinstance(data, str) and re.match(r'^\+?\d{8,15}$', data.strip()):
+                return True, data.strip()
+        except Exception as e:
+            logger.error(f"⚠️ خطأ request_number: {e}")
+            continue
+    return False, "فشل طلب الرقم"
+
 def find_number_for_country(country_code, service_key, user_id, max_attempts=15):
-    """
-    البحث الصارم عن رقم من دولة معينة:
-    - بيدور في آخر 20 كود
-    - يتأكد إن الرقم من نفس الدولة
-    - لو ملقاش، يرجع None
-    """
+    """بحث صارم: 1) request_number 2) البحث في الأكواد"""
     user_numbers = set()
     for n in load_my_numbers():
         if n.get("added_by") == user_id:
             user_numbers.add(n.get("number"))
 
+    # ═══ 1. جرب طلب من الموقع مباشرة ═══
+    logger.info(f"🔍 محاولة طلب رقم من {country_code} مباشرة...")
+    success, result = np_request_number(service_key, country_code)
+    if success:
+        cleaned = clean_number(result)
+        if number_matches_country(cleaned, country_code) and cleaned not in user_numbers:
+            logger.info(f"✅ تم طلب رقم جديد من الموقع: {result}")
+            return result
+        else:
+            logger.warning(f"⚠️ الرقم {result} مش من {country_code} أو مستخدم")
+
+    # ═══ 2. لو فشل، دوّر في الأكواد ═══
+    logger.info(f"🔍 البحث في الأكواد...")
     found_number = None
     attempts = 0
-
     while attempts < max_attempts and not found_number:
         codes = np_get_latest_codes()
         for entry in codes:
@@ -981,35 +985,24 @@ def find_number_for_country(country_code, service_key, user_id, max_attempts=15)
                     num = str(entry.get("number") or entry.get("phone") or "")
                 else:
                     continue
-
-                # فلترة الخدمة
                 if service_key == "whatsapp":
                     if "whatsapp" not in service and "wa" not in service:
                         continue
                 else:
                     if service_key not in service:
                         continue
-
-                # ✅ فلترة الدولة (صارمة)
                 if not number_matches_country(num, country_code):
                     continue
-
-                # فلترة التكرار
                 cleaned_candidate = clean_number(num)
                 if cleaned_candidate in user_numbers:
                     continue
-
                 found_number = num
-                logger.info(f"✅ لقيت رقم من {country_code}: {found_number}")
+                logger.info(f"✅ لقيت رقم من الأكواد: {found_number}")
                 break
             except: continue
         if not found_number:
             attempts += 1
             time.sleep(2)
-
-    if not found_number:
-        logger.warning(f"⚠️ مفيش رقم من {country_code} في آخر 20 كود")
-
     return found_number
 
 # ═══════════════════════════════════════════════════════════════
@@ -1062,7 +1055,7 @@ def np_check_new_code_loop():
             codes_list = np_get_latest_codes()
             last_sent = load_np_last_code()
 
-            for item in codes_list[:20]:
+            for item in codes_list[:100]:
                 if not isinstance(item, (list, tuple)) or len(item) < 3:
                     if isinstance(item, dict):
                         number = item.get("number") or item.get("phone") or ""
@@ -1142,10 +1135,10 @@ def np_check_new_code_loop():
         time.sleep(0.5)
 
 # ═══════════════════════════════════════════════════════════════
-# ⚡ المحدّث السريع (كل 30 ثانية) — يعتمد على آخر 20 كود
+# ⚡ المحدّث السريع (كل 30 ثانية) — يعتمد على آخر 200 كود
 # ═══════════════════════════════════════════════════════════════
 def cache_updater_loop():
-    logger.info("⚡ بدء المحدّث السريع (آخر 20 كود)...")
+    logger.info("⚡ بدء المحدّث السريع...")
     time.sleep(10)
 
     while True:
@@ -1158,7 +1151,6 @@ def cache_updater_loop():
             if codes:
                 added_now = 0
                 with available_countries_lock:
-                    # ✅ نبدأ من الصفر - الدول من آخر 20 كود بس
                     existing = {}
 
                     for entry in codes:
@@ -1249,7 +1241,7 @@ def get_owner_panel_text():
         f"🚫 <b>المحظورون:</b> {len(BANNED)}\n"
         f"📱 <b>الأرقام:</b> {len(load_my_numbers())}\n"
         f"🌍 <b>الدول المكتشفة:</b> {len(known)}\n"
-        f"📞 <b>دول واتساب (آخر 20 كود):</b> {wa_count}\n"
+        f"📞 <b>دول واتساب:</b> {wa_count}\n"
         f"📨 <b>إجمالي الأكواد:</b> {STATISTICS.get('total_codes', 0)}\n\n"
         "━━━━━━━━━━━━━━━━━━━━━━━━━━\n🎯 اختر من القائمة:"
     )
@@ -1414,9 +1406,6 @@ def owner_cmd(msg):
     bot.send_message(msg.chat.id, get_owner_panel_text(), parse_mode="HTML",
                      reply_markup=get_owner_menu())
 
-# ═══════════════════════════════════════════════════════════════
-# 📩 معالج الرسائل
-# ═══════════════════════════════════════════════════════════════
 @bot.message_handler(content_types=["text"])
 def handle_messages(msg):
     user_id = msg.from_user.id
@@ -1651,9 +1640,6 @@ def service_selected(call):
     bot.edit_message_text(text, call.message.chat.id, call.message.message_id,
                           parse_mode="HTML", reply_markup=markup)
 
-# ═══════════════════════════════════════════════════════════════
-# 🔥 اختيار دولة
-# ═══════════════════════════════════════════════════════════════
 @bot.callback_query_handler(func=lambda call: call.data.startswith("pick_country_"))
 def pick_country_cb(call):
     user_id = call.from_user.id
@@ -1669,8 +1655,8 @@ def pick_country_cb(call):
     cname = get_country_name(country_code)
 
     bot.edit_message_text(
-        f"{service_icon} <b>جاري البحث عن رقم {service_name} من {cname}...</b>\n\n"
-        f"📡 بنبحث في الأرقام المتاحة من نفس الدولة...",
+        f"{service_icon} <b>جاري طلب رقم {service_name} من {cname}...</b>\n\n"
+        f"📡 بنطلب من الموقع...",
         call.message.chat.id, call.message.message_id, parse_mode="HTML"
     )
 
@@ -1691,7 +1677,6 @@ def pick_country_cb(call):
 
     text = (
         f"❌ <b>لا يوجد رقم {service_name} من {cname} حالياً</b>\n\n"
-        f"⚠️ الأرقام المتاحة حالياً من دول تانية.\n"
         f"💡 جرب دولة تانية، أو انتظر وصول أرقام جديدة."
     )
     markup = InlineKeyboardMarkup(row_width=1)
@@ -1700,9 +1685,6 @@ def pick_country_cb(call):
     bot.edit_message_text(text, call.message.chat.id, call.message.message_id,
                           parse_mode="HTML", reply_markup=markup)
 
-# ═══════════════════════════════════════════════════════════════
-# 🔥 طلب رقم جديد
-# ═══════════════════════════════════════════════════════════════
 @bot.callback_query_handler(func=lambda call: call.data.startswith("new_number_"))
 def new_number_cb(call):
     user_id = call.from_user.id
@@ -1724,8 +1706,8 @@ def new_number_cb(call):
 
     try:
         bot.edit_message_text(
-            f"{service_icon} <b>جاري البحث عن رقم {service_name} جديد من {cname}...</b>\n\n"
-            f"📡 بنبحث في الأرقام المتاحة من نفس الدولة...",
+            f"{service_icon} <b>جاري طلب رقم {service_name} جديد من {cname}...</b>\n\n"
+            f"📡 بنطلب من الموقع...",
             call.message.chat.id, call.message.message_id, parse_mode="HTML"
         )
     except: pass
@@ -1750,8 +1732,7 @@ def new_number_cb(call):
 
     text = (
         f"❌ <b>لا يوجد رقم {service_name} جديد من {cname} حالياً</b>\n\n"
-        f"⚠️ الأرقام المتاحة حالياً من دول تانية.\n"
-        f"💡 جرب دولة تانية، أو انتظر وصول أرقام جديدة."
+        f"💡 جرب دولة تانية."
     )
     markup = InlineKeyboardMarkup(row_width=1)
     markup.add(InlineKeyboardButton("🌍 رجوع للدول", callback_data=f"service_{service_key}", style="success"))
@@ -1767,9 +1748,6 @@ def copy_num_cb(call):
     num = call.data.replace("copy_num_", "")
     bot.answer_callback_query(call.id, f"📋 +{num}", show_alert=True)
 
-# ═══════════════════════════════════════════════════════════════
-# 📊 معلومات الرقم
-# ═══════════════════════════════════════════════════════════════
 @bot.callback_query_handler(func=lambda call: call.data.startswith("code_info_"))
 def code_info_callback(call):
     user_id = call.from_user.id
@@ -2080,7 +2058,7 @@ if __name__ == "__main__":
     logger.info("🚀 بدء التشغيل...")
 
     Thread(target=cache_updater_loop, daemon=True).start()
-    logger.info("⚡ محدّث الكاش السريع شغال (آخر 20 كود، كل 30 ثانية)")
+    logger.info("⚡ محدّث الكاش السريع شغال (كل 30 ثانية)")
 
     Thread(target=np_check_new_code_loop, daemon=True).start()
     logger.info("✅ فحص الأكواد فوري (كل 0.5 ثانية)")
