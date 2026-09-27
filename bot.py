@@ -185,7 +185,6 @@ def auto_delete_message(chat_id, message_id, delay=300):
         except Exception as e:
             logger.debug(f"فشل حذف: {e}")
     Thread(target=delete, daemon=True).start()
-
 # ═══════════════════════════════════════════════════════════════
 # 🌍 كل دول العالم
 # ═══════════════════════════════════════════════════════════════
@@ -907,104 +906,100 @@ def np_get_latest_codes():
         logger.error(f"❌ خطأ في الاتصال: {e}")
         return []
 
-def np_request_number(service, country):
-    """طلب رقم جديد من الموقع - POST /api/request_number"""
+def get_english_country_name(country_code):
+    """تحويل كود الدولة (IQ) للاسم الإنجليزي (Iraq)"""
+    try:
+        country_obj = pycountry.countries.get(alpha_2=country_code.upper())
+        if country_obj:
+            return country_obj.name
+    except:
+        pass
+    return country_code
+
+def np_request_number(service, country_code):
+    """
+    طلب رقم جديد من الموقع
+    POST /api/request_number
+    Body: {"service": "WhatsApp", "country": "Iraq"}
+    """
+    service_map = {
+        "whatsapp": "WhatsApp",
+        "telegram": "Telegram",
+        "facebook": "Facebook",
+        "instagram": "Instagram",
+        "tiktok": "TikTok",
+        "google": "Google",
+        "twitter": "Twitter",
+    }
+    service_name = service_map.get(service.lower(), service.capitalize())
+    country_name = get_english_country_name(country_code)
+    
     url = f"{NUMBERPANEL_BASE}/request_number"
     headers = {
         "Authorization": f"Bearer {NUMBERPANEL_API_TOKEN}",
         "Content-Type": "application/json",
-        "Accept": "application/json",
     }
-    payloads = [
-        {"service": service, "country": country},
-        {"service": service, "country_code": country},
-        {"app": service, "country": country},
-        {"app": service, "country_code": country},
-    ]
-    for payload in payloads:
+    
+    payload = {
+        "service": service_name,
+        "country": country_name
+    }
+    
+    logger.info(f"📡 طلب رقم: service={service_name}, country={country_name}")
+    
+    try:
+        r = requests.post(url, json=payload, headers=headers, timeout=30)
+        logger.info(f"📡 status={r.status_code}, response={r.text[:300]}")
+        
+        if r.status_code != 200:
+            return False, f"HTTP {r.status_code}: {r.text[:200]}"
+        
         try:
-            r = requests.post(url, json=payload, headers=headers, timeout=25)
-            logger.info(f"📡 request_number: status={r.status_code}, payload={payload}")
-            if r.status_code != 200:
-                continue
-            try:
-                data = r.json()
-            except:
-                continue
-            if isinstance(data, dict):
-                if data.get("success") is False:
-                    logger.warning(f"⚠️ request_number فشل: {data.get('message')}")
-                    continue
-                number = (data.get("number") or data.get("phone") or
-                          data.get("num") or data.get("msisdn") or
-                          data.get("phone_number"))
+            data = r.json()
+        except:
+            return False, f"JSON error: {r.text[:200]}"
+        
+        if isinstance(data, dict):
+            if data.get("success") is True:
+                number = data.get("number")
                 if number:
                     return True, str(number)
-                if "data" in data and isinstance(data["data"], dict):
-                    number = (data["data"].get("number") or data["data"].get("phone"))
-                    if number:
-                        return True, str(number)
-            elif isinstance(data, str) and re.match(r'^\+?\d{8,15}$', data.strip()):
-                return True, data.strip()
-        except Exception as e:
-            logger.error(f"⚠️ خطأ request_number: {e}")
-            continue
-    return False, "فشل طلب الرقم"
+            else:
+                return False, data.get("message", "فشل الطلب")
+        
+        return False, f"Unexpected: {r.text[:200]}"
+    except Exception as e:
+        logger.error(f"⚠️ خطأ: {e}")
+        return False, str(e)
 
-def find_number_for_country(country_code, service_key, user_id, max_attempts=15):
-    """بحث صارم: 1) request_number 2) البحث في الأكواد"""
+def find_number_for_country(country_code, service_key, user_id, max_attempts=3):
+    """
+    طلب رقم من الموقع مباشرة.
+    مش بيدور في الأكواد.
+    """
     user_numbers = set()
     for n in load_my_numbers():
         if n.get("added_by") == user_id:
             user_numbers.add(n.get("number"))
-
-    # ═══ 1. جرب طلب من الموقع مباشرة ═══
-    logger.info(f"🔍 محاولة طلب رقم من {country_code} مباشرة...")
-    success, result = np_request_number(service_key, country_code)
-    if success:
-        cleaned = clean_number(result)
-        if number_matches_country(cleaned, country_code) and cleaned not in user_numbers:
-            logger.info(f"✅ تم طلب رقم جديد من الموقع: {result}")
-            return result
+    
+    for attempt in range(max_attempts):
+        logger.info(f"🔍 محاولة {attempt + 1} لطلب رقم من {country_code}")
+        success, result = np_request_number(service_key, country_code)
+        
+        if success:
+            cleaned = clean_number(result)
+            if cleaned and cleaned not in user_numbers:
+                logger.info(f"✅ تم طلب رقم جديد: {result}")
+                return result
+            else:
+                logger.warning(f"⚠️ الرقم {result} مستخدم قبل كده")
         else:
-            logger.warning(f"⚠️ الرقم {result} مش من {country_code} أو مستخدم")
-
-    # ═══ 2. لو فشل، دوّر في الأكواد ═══
-    logger.info(f"🔍 البحث في الأكواد...")
-    found_number = None
-    attempts = 0
-    while attempts < max_attempts and not found_number:
-        codes = np_get_latest_codes()
-        for entry in codes:
-            try:
-                if isinstance(entry, (list, tuple)) and len(entry) >= 2:
-                    service = str(entry[0]).lower()
-                    num = str(entry[1])
-                elif isinstance(entry, dict):
-                    service = str(entry.get("service") or entry.get("app") or "").lower()
-                    num = str(entry.get("number") or entry.get("phone") or "")
-                else:
-                    continue
-                if service_key == "whatsapp":
-                    if "whatsapp" not in service and "wa" not in service:
-                        continue
-                else:
-                    if service_key not in service:
-                        continue
-                if not number_matches_country(num, country_code):
-                    continue
-                cleaned_candidate = clean_number(num)
-                if cleaned_candidate in user_numbers:
-                    continue
-                found_number = num
-                logger.info(f"✅ لقيت رقم من الأكواد: {found_number}")
-                break
-            except: continue
-        if not found_number:
-            attempts += 1
+            logger.warning(f"⚠️ فشلت المحاولة {attempt + 1}: {result}")
+        
+        if attempt < max_attempts - 1:
             time.sleep(2)
-    return found_number
-
+    
+    return None
 # ═══════════════════════════════════════════════════════════════
 # 🔥 فحص الأكواد وإرسالها للجروب
 # ═══════════════════════════════════════════════════════════════
@@ -1640,6 +1635,9 @@ def service_selected(call):
     bot.edit_message_text(text, call.message.chat.id, call.message.message_id,
                           parse_mode="HTML", reply_markup=markup)
 
+# ═══════════════════════════════════════════════════════════════
+# 🔥 اختيار دولة — طلب مباشر من الموقع
+# ═══════════════════════════════════════════════════════════════
 @bot.callback_query_handler(func=lambda call: call.data.startswith("pick_country_"))
 def pick_country_cb(call):
     user_id = call.from_user.id
@@ -1654,13 +1652,16 @@ def pick_country_cb(call):
     service_icon = get_service_icon(service_key)
     cname = get_country_name(country_code)
 
-    bot.edit_message_text(
-        f"{service_icon} <b>جاري طلب رقم {service_name} من {cname}...</b>\n\n"
-        f"📡 بنطلب من الموقع...",
-        call.message.chat.id, call.message.message_id, parse_mode="HTML"
-    )
+    try:
+        bot.edit_message_text(
+            f"{service_icon} <b>جاري طلب رقم {service_name} من {cname}...</b>\n\n"
+            f"📡 بنطلب من الموقع...\n"
+            f"⏳ استنى شوية",
+            call.message.chat.id, call.message.message_id, parse_mode="HTML"
+        )
+    except: pass
 
-    found_number = find_number_for_country(country_code, service_key, user_id, max_attempts=15)
+    found_number = find_number_for_country(country_code, service_key, user_id, max_attempts=3)
 
     if found_number:
         cleaned = clean_number(found_number)
@@ -1685,6 +1686,9 @@ def pick_country_cb(call):
     bot.edit_message_text(text, call.message.chat.id, call.message.message_id,
                           parse_mode="HTML", reply_markup=markup)
 
+# ═══════════════════════════════════════════════════════════════
+# 🔥 طلب رقم جديد — طلب مباشر من الموقع
+# ═══════════════════════════════════════════════════════════════
 @bot.callback_query_handler(func=lambda call: call.data.startswith("new_number_"))
 def new_number_cb(call):
     user_id = call.from_user.id
@@ -1707,12 +1711,13 @@ def new_number_cb(call):
     try:
         bot.edit_message_text(
             f"{service_icon} <b>جاري طلب رقم {service_name} جديد من {cname}...</b>\n\n"
-            f"📡 بنطلب من الموقع...",
+            f"📡 بنطلب من الموقع...\n"
+            f"⏳ استنى شوية",
             call.message.chat.id, call.message.message_id, parse_mode="HTML"
         )
     except: pass
 
-    found_number = find_number_for_country(country_code, service_key, user_id, max_attempts=15)
+    found_number = find_number_for_country(country_code, service_key, user_id, max_attempts=3)
 
     if found_number:
         cleaned = clean_number(found_number)
@@ -1724,10 +1729,10 @@ def new_number_cb(call):
 
         text, markup = build_number_success_message(service_key, country_code, cleaned)
         try:
-            bot.send_message(call.message.chat.id, text, parse_mode="HTML", reply_markup=markup)
-        except:
             bot.edit_message_text(text, call.message.chat.id, call.message.message_id,
                                   parse_mode="HTML", reply_markup=markup)
+        except:
+            bot.send_message(call.message.chat.id, text, parse_mode="HTML", reply_markup=markup)
         return
 
     text = (
