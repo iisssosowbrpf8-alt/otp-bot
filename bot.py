@@ -37,10 +37,10 @@ NUMBERPANEL_API_TOKEN = os.environ.get("NUMBERPANEL_API_TOKEN", "np_live_ygwxxtf
 BOT_USERNAME = os.environ.get("BOT_USERNAME", "")
 
 # ═══════════════════════════════════════════════════════════════
-# 🔒 إعدادات الاشتراك الإجباري (عدّلهم من هنا)
+# 🔒 إعدادات الاشتراك الإجباري
 # ═══════════════════════════════════════════════════════════════
-FORCE_SUB_CHANNEL_ID = os.environ.get("FORCE_SUB_CHANNEL_ID", "")  # مثال: -1001234567890
-FORCE_SUB_CHANNEL_LINK = os.environ.get("FORCE_SUB_CHANNEL_LINK", "")  # مثال: https://t.me/yourchannel
+FORCE_SUB_CHANNEL_ID = os.environ.get("FORCE_SUB_CHANNEL_ID", "")
+FORCE_SUB_CHANNEL_LINK = os.environ.get("FORCE_SUB_CHANNEL_LINK", "")
 FORCE_SUB_ENABLED_FILE = "force_sub_enabled.json"
 
 if not BOT_TOKEN:
@@ -434,7 +434,13 @@ STATISTICS = {
 user_states = {}
 broadcast_state = {}
 
-# ✨ دالة تحميل حالة الاشتراك الإجباري
+# ✨ كاش آخر 30 كود
+LAST_30_CODES_CACHE = {
+    "data": [],
+    "last_update": 0,
+    "lock": Lock()
+}
+
 def is_force_sub_enabled():
     if os.path.exists(FORCE_SUB_ENABLED_FILE):
         try:
@@ -577,9 +583,6 @@ def extract_from_message(raw_text):
             return match.group(1), text
     return None, text
 
-# ═══════════════════════════════════════════════════════════════
-# 🛠️ دالة تحويل اسم الدولة إلى شكل جميل (علم + اسم عربي)
-# ═══════════════════════════════════════════════════════════════
 def format_country_button(country_input):
     code = ""
     if len(country_input) == 2 and country_input.isalpha():
@@ -601,7 +604,7 @@ def format_country_button(country_input):
     return f"🌍 {country_input}"
 
 # ═══════════════════════════════════════════════════════════════
-# 🔌 اتصالات الـ API الخاصة بـ NumberPanel
+# 🔌 اتصالات الـ API
 # ═══════════════════════════════════════════════════════════════
 NUMBERPANEL_BASE = f"{NUMBERPANEL_API_URL.rstrip('/')}/api"
 HEADERS = {
@@ -788,7 +791,7 @@ def add_code_bonus(user_id):
     save_referrals(REFERRALS)
 
 # ═══════════════════════════════════════════════════════════════
-# 📱 إدارة الأرقام الخاصة
+# 📱 إدارة الأرقام
 # ═══════════════════════════════════════════════════════════════
 def load_my_numbers():
     with my_numbers_lock:
@@ -962,7 +965,7 @@ def load_statistics():
         except: pass
 
 # ═══════════════════════════════════════════════════════════════
-# 🔥 فحص الأكواد وإرسالها للجروب
+# 🔥 فحص الأكواد وإرسالها للجروب (مع تنظيف الكود)
 # ═══════════════════════════════════════════════════════════════
 def build_group_code_message(number, code_val, service, country, message=""):
     cleaned = clean_number(number)
@@ -971,7 +974,7 @@ def build_group_code_message(number, code_val, service, country, message=""):
     flag = get_flag(country) if country else "🌍"
     service_display = DEFAULT_SERVICES.get(service.lower() if service else "", service or "غير معروفة")
 
-    # ✨ التعديل: عرض الكود فقط في الرسالة
+    # ✨ عرض الكود فقط (بدون نص الرسالة الكامل)
     text = (
         f"{service_icon} <b>كود جديد</b>\n"
         f"━━━━━━━━━━━━━━━━━━━━━\n"
@@ -1087,6 +1090,148 @@ def np_check_new_code_loop():
         time.sleep(5)
 
 # ═══════════════════════════════════════════════════════════════
+# 📊 آخر 30 كود من الموقع (تحديث كل 30 دقيقة)
+# ═══════════════════════════════════════════════════════════════
+def fetch_last_30_from_site():
+    """جلب آخر 30 كود من الموقع مباشرة"""
+    try:
+        codes = np_get_latest_codes()
+        if not codes:
+            return []
+        return codes[:30]
+    except Exception as e:
+        logger.error(f"خطأ جلب آخر 30 كود: {e}")
+        return []
+
+def get_last_30_codes_cached(force_refresh=False):
+    """ترجع آخر 30 كود (من الكاش، وتحدث كل 30 دقيقة)"""
+    with LAST_30_CODES_CACHE["lock"]:
+        now = time.time()
+        if force_refresh or (now - LAST_30_CODES_CACHE["last_update"] > 1800) or not LAST_30_CODES_CACHE["data"]:
+            logger.info("🔄 تحديث كاش آخر 30 كود من الموقع...")
+            fresh = fetch_last_30_from_site()
+            if fresh:
+                LAST_30_CODES_CACHE["data"] = fresh
+                LAST_30_CODES_CACHE["last_update"] = now
+                logger.info(f"✅ تم تحديث الكاش: {len(fresh)} كود")
+        return LAST_30_CODES_CACHE["data"]
+
+def background_last_30_updater():
+    """محدث تلقائي كل 30 دقيقة"""
+    logger.info("⏰ بدء المحدث التلقائي لآخر 30 كود (كل 30 دقيقة)...")
+    time.sleep(10)
+    while True:
+        try:
+            get_last_30_codes_cached(force_refresh=True)
+            logger.info("✅ تم تحديث آخر 30 كود تلقائياً")
+        except Exception as e:
+            logger.error(f"خطأ التحديث التلقائي: {e}")
+        time.sleep(1800)
+
+def analyze_last_30_codes():
+    """تحليل آخر 30 كود وحساب ترتيب الدول"""
+    codes = get_last_30_codes_cached()
+    if not codes:
+        return "📊 <b>آخر 30 كود من الموقع</b>\n\n⚠️ لا توجد أكواد حالياً.", None
+
+    country_stats = {}
+    total = 0
+    
+    for item in codes:
+        if not isinstance(item, list) or len(item) < 2:
+            continue
+        number = str(item[1])
+        cleaned = clean_number(number)
+        if not cleaned:
+            continue
+        country_name, flag, region = detect_country_from_number(cleaned)
+        key = region if region and region != "UN" else "UN"
+        if key not in country_stats:
+            country_stats[key] = {"flag": flag, "count": 0}
+        country_stats[key]["count"] += 1
+        total += 1
+
+    if total == 0:
+        return "📊 <b>آخر 30 كود من الموقع</b>\n\n⚠️ لم يتم التعرف على الدول.", None
+
+    sorted_stats = sorted(country_stats.items(), key=lambda x: x[1]["count"], reverse=True)
+
+    text = (
+        f"📊 <b>آخر {total} كود من الموقع</b>\n"
+        f"━━━━━━━━━━━━━━━━━━━━━\n\n"
+        f"🌍 <b>ترتيب الدول حسب عدد الأكواد:</b>\n\n"
+    )
+
+    for idx, (code, data) in enumerate(sorted_stats, 1):
+        flag = data["flag"]
+        count = data["count"]
+        pct = (count / total * 100)
+        country_name_ar = COUNTRIES_NAMES_AR.get(code, code)
+        clean_name = country_name_ar.replace(flag, "").strip()
+        medal = ""
+        if idx == 1: medal = "🥇 "
+        elif idx == 2: medal = "🥈 "
+        elif idx == 3: medal = "🥉 "
+        bar = "█" * min(int(pct / 5), 20)
+        text += f"{medal}{idx}. {flag} {clean_name}\n"
+        text += f"      <b>{count}</b> ({pct:.0f}%) {bar}\n"
+
+    text += f"\n━━━━━━━━━━━━━━━━━━━━━\n"
+    text += f"📈 <b>الإجمالي:</b> {total} كود\n"
+    text += f"🌍 <b>عدد الدول:</b> {len(sorted_stats)}\n\n"
+    text += f"⏰ <b>آخر تحديث:</b> {datetime.now().strftime('%H:%M:%S')}\n"
+    text += f"🔄 يتم التحديث كل 30 دقيقة تلقائياً"
+
+    return text, sorted_stats
+
+# ═══════════════════════════════════════════════════════════════
+# 📲 دالة بناء رسالة نجاح طلب الرقم (بالترتيب المطلوب)
+# ═══════════════════════════════════════════════════════════════
+def build_number_success_message(service_key, country_name_en, number):
+    service_name = DEFAULT_SERVICES.get(service_key, service_key)
+    service_icon = get_service_icon(service_key)
+    cleaned = clean_number(number)
+
+    text = (
+        f"✅ <b>تم استلام رقم {service_name}!</b>\n\n"
+        f"━━━━━━━━━━━━━━━━━━━━━\n"
+        f"📞 <b>الرقم:</b> <code>+{cleaned}</code>\n"
+        f"🌍 <b>الدولة:</b> {country_name_en}\n"
+        f"{service_icon} <b>الخدمة:</b> {service_name}\n"
+        f"━━━━━━━━━━━━━━━━━━━━━\n\n"
+        f"🔔 سيصلك الكود هنا تلقائياً عند وصوله."
+    )
+
+    markup = InlineKeyboardMarkup(row_width=1)
+
+    # 1️⃣ نسخ الرقم
+    try:
+        markup.add(InlineKeyboardButton(
+            text="📋 نسخ الرقم",
+            copy_text=CopyTextButton(text=f"+{cleaned}"),
+            style="success"
+        ))
+    except:
+        markup.add(InlineKeyboardButton("📋 نسخ الرقم", callback_data=f"copy_num_{cleaned}", style="success"))
+
+    # 2️⃣ طلب رقم جديد
+    markup.add(InlineKeyboardButton("📲 طلب رقم جديد", callback_data=f"new_number_{service_key}", style="success"))
+
+    # 3️⃣ جروب البوت
+    markup.add(InlineKeyboardButton("🔗 جروب البوت", url=GROUP_LINK, style="success"))
+
+    # 4️⃣ رجوع للدول
+    markup.add(InlineKeyboardButton("🌍 رجوع للدول", callback_data=f"service_{service_key}", style="success"))
+
+    # 5️⃣ اختر خدمة أخرى
+    markup.add(InlineKeyboardButton("🔄 اختر خدمة أخرى", callback_data="back_to_services", style="primary"))
+
+    # 6️⃣ آخر 30 كود من الموقع (للمستخدمين)
+    markup.add(InlineKeyboardButton("📊 آخر 30 كود من الموقع", callback_data="show_last_30_codes", style="danger"))
+
+    return text, markup
+
+# ═══════════════════════════════════════════════════════════════
 # 📲 الأزرار الرئيسية
 # ═══════════════════════════════════════════════════════════════
 def get_main_reply_keyboard(user_id=None):
@@ -1152,7 +1297,6 @@ def get_owner_menu():
         InlineKeyboardButton("📞 دول واتساب", callback_data="owner_wa_countries", style="primary")
     )
     markup.row(InlineKeyboardButton("📣 الإذاعة للمستخدمين", callback_data="owner_broadcast_btn", style="success"))
-    # ✨ الأزرار الجديدة
     markup.row(InlineKeyboardButton("📢 بث لكل المستخدمين", callback_data="owner_broadcast_users", style="success"))
     force_sub_label = "🔓 إلغاء الاشتراك الإجباري" if is_force_sub_enabled() else "🔒 تفعيل الاشتراك الإجباري"
     markup.row(InlineKeyboardButton(force_sub_label, callback_data="owner_toggle_forcesub", style="primary"))
@@ -1198,43 +1342,10 @@ def get_admin_menu_with_numberpanel():
     markup.add(InlineKeyboardButton("🔙 رجوع", callback_data="back_to_main", style="success"))
     return markup
 
-def build_number_success_message(service_key, country_name_en, number):
-    service_name = DEFAULT_SERVICES.get(service_key, service_key)
-    service_icon = get_service_icon(service_key)
-    cleaned = clean_number(number)
-
-    text = (
-        f"✅ <b>تم استلام رقم {service_name}!</b>\n\n"
-        f"━━━━━━━━━━━━━━━━━━━━━\n"
-        f"📞 <b>الرقم:</b> <code>+{cleaned}</code>\n"
-        f"🌍 <b>الدولة:</b> {country_name_en}\n"
-        f"{service_icon} <b>الخدمة:</b> {service_name}\n"
-        f"━━━━━━━━━━━━━━━━━━━━━\n\n"
-        f"🔔 سيصلك الكود هنا تلقائياً عند وصوله."
-    )
-
-    markup = InlineKeyboardMarkup(row_width=1)
-    try:
-        markup.add(InlineKeyboardButton(
-            text="📋 نسخ الرقم",
-            copy_text=CopyTextButton(text=f"+{cleaned}"),
-            style="success"
-        ))
-    except:
-        markup.add(InlineKeyboardButton("📋 نسخ الرقم", callback_data=f"copy_num_{cleaned}", style="success"))
-
-    # ✨ زر اختيار خدمة أخرى
-    markup.add(InlineKeyboardButton("🔄 اختر خدمة أخرى", callback_data="back_to_services", style="primary"))
-    markup.add(InlineKeyboardButton("🌍 رجوع للدول", callback_data=f"service_{service_key}", style="success"))
-    markup.add(InlineKeyboardButton("🔗 جروب البوت", url=GROUP_LINK, style="success"))
-
-    return text, markup
-
 # ═══════════════════════════════════════════════════════════════
-# 🔒 دالة التحقق من الاشتراك الإجباري
+# 🔒 التحقق من الاشتراك الإجباري
 # ═══════════════════════════════════════════════════════════════
 def check_force_sub(user_id):
-    """ترجع True لو المستخدم مشترك أو الاشتراك معطل، False لو لازم يشترك"""
     if not is_force_sub_enabled():
         return True
     if not FORCE_SUB_CHANNEL_ID:
@@ -1248,7 +1359,7 @@ def check_force_sub(user_id):
         return False
     except Exception as e:
         logger.error(f"خطأ التحقق من الاشتراك: {e}")
-        return True  # لو فيه خطأ، نسمح بالمرور عشان ما نعطلش البوت
+        return True
 
 def send_force_sub_message(chat_id):
     markup = InlineKeyboardMarkup(row_width=1)
@@ -1264,7 +1375,7 @@ def send_force_sub_message(chat_id):
     )
 
 # ═══════════════════════════════════════════════════════════════
-# 📲 الأوامر (/start وغيرها)
+# 📲 أوامر البوت
 # ═══════════════════════════════════════════════════════════════
 @bot.message_handler(commands=["start"])
 def start(msg):
@@ -1273,7 +1384,6 @@ def start(msg):
         bot.reply_to(msg, "🚫 أنت محظور")
         return
 
-    # ✨ التحقق من الاشتراك الإجباري
     if not check_force_sub(user_id):
         send_force_sub_message(msg.chat.id)
         return
@@ -1414,7 +1524,6 @@ def handle_messages(msg):
             bot.reply_to(msg, "❌ ID غير صالح")
         return
 
-    # ✨ البث للمستخدمين (القديم)
     if user_states.get(user_id, {}).get("action") == "owner_broadcast":
         if user_id != MAIN_ADMIN_ID: return
         btext = msg.text
@@ -1431,19 +1540,16 @@ def handle_messages(msg):
         del user_states[user_id]
         return
 
-    # ✨ البث الجديد لكل المستخدمين + الجروبات
     if user_states.get(user_id, {}).get("action") == "owner_broadcast_users":
         if user_id != MAIN_ADMIN_ID: return
         btext = msg.text
         s, f = 0, 0
         prog = bot.send_message(msg.chat.id, "⏳ جاري الإرسال للمستخدمين...")
-        # إرسال للمستخدمين
         for uid in list(USERS.keys()):
             try:
                 bot.send_message(int(uid), btext, parse_mode="HTML")
                 s += 1
             except: f += 1
-        # إرسال للجروبات
         g_s, g_f = 0, 0
         for gid in list(GROUPS):
             try:
@@ -1553,7 +1659,7 @@ def handle_messages(msg):
         return
 
 # ═══════════════════════════════════════════════════════════════
-# 🔥 اختيار خدمة
+# 🔄 رجوع للخدمات
 # ═══════════════════════════════════════════════════════════════
 @bot.callback_query_handler(func=lambda call: call.data == "back_to_services")
 def back_to_services_cb(call):
@@ -1568,6 +1674,9 @@ def back_to_services_cb(call):
                          parse_mode="HTML", reply_markup=get_services_menu())
     bot.answer_callback_query(call.id, "✅")
 
+# ═══════════════════════════════════════════════════════════════
+# ✅ التحقق من الاشتراك
+# ═══════════════════════════════════════════════════════════════
 @bot.callback_query_handler(func=lambda call: call.data == "check_sub_now")
 def check_sub_now_cb(call):
     user_id = call.from_user.id
@@ -1579,6 +1688,9 @@ def check_sub_now_cb(call):
     else:
         bot.answer_callback_query(call.id, "❌ لم تشترك بعد! اشترك أولاً ثم حاول مجدداً.", show_alert=True)
 
+# ═══════════════════════════════════════════════════════════════
+# 🔥 اختيار خدمة
+# ═══════════════════════════════════════════════════════════════
 @bot.callback_query_handler(func=lambda call: call.data.startswith("service_"))
 def service_selected(call):
     service_key = call.data.replace("service_", "")
@@ -1625,6 +1737,9 @@ def service_selected(call):
     text = f"{service_icon} <b>{service_name} متاح في {len(countries)} دولة</b>\n\n🎯 <b>اختر الدولة:</b>"
     bot.edit_message_text(text, call.message.chat.id, call.message.message_id, parse_mode="HTML", reply_markup=markup)
 
+# ═══════════════════════════════════════════════════════════════
+# 🔥 اختيار دولة وطلب الرقم
+# ═══════════════════════════════════════════════════════════════
 @bot.callback_query_handler(func=lambda call: call.data.startswith("pick_country_"))
 def pick_country_cb(call):
     user_id = call.from_user.id
@@ -1686,6 +1801,61 @@ def new_number_cb(call):
 def copy_num_cb(call):
     num = call.data.replace("copy_num_", "")
     bot.answer_callback_query(call.id, f"📋 +{num}", show_alert=True)
+
+# ═══════════════════════════════════════════════════════════════
+# 📊 آخر 30 كود من الموقع (للمستخدمين)
+# ═══════════════════════════════════════════════════════════════
+@bot.callback_query_handler(func=lambda call: call.data == "show_last_30_codes")
+def show_last_30_codes_cb(call):
+    user_id = call.from_user.id
+    if is_banned(user_id):
+        bot.answer_callback_query(call.id, "🚫 أنت محظور", show_alert=True)
+        return
+
+    bot.answer_callback_query(call.id, "📊 جاري التحليل...")
+
+    try:
+        text, _ = analyze_last_30_codes()
+
+        markup = InlineKeyboardMarkup(row_width=2)
+        markup.add(InlineKeyboardButton("🔄 تحديث", callback_data="refresh_last_30", style="success"))
+        markup.add(InlineKeyboardButton("🔙 رجوع", callback_data="back_to_services", style="primary"))
+        markup.add(InlineKeyboardButton("🔗 جروب البوت", url=GROUP_LINK, style="success"))
+
+        try:
+            bot.edit_message_text(text, call.message.chat.id, call.message.message_id,
+                                  parse_mode="HTML", reply_markup=markup)
+        except:
+            bot.send_message(call.message.chat.id, text, parse_mode="HTML", reply_markup=markup)
+    except Exception as e:
+        logger.error(f"خطأ عرض آخر 30 كود: {e}")
+        bot.answer_callback_query(call.id, f"⚠️ خطأ: {e}", show_alert=True)
+
+@bot.callback_query_handler(func=lambda call: call.data == "refresh_last_30")
+def refresh_last_30_cb(call):
+    user_id = call.from_user.id
+    if is_banned(user_id):
+        bot.answer_callback_query(call.id, "🚫 أنت محظور", show_alert=True)
+        return
+
+    bot.answer_callback_query(call.id, "🔄 جاري التحديث من الموقع...")
+    try:
+        get_last_30_codes_cached(force_refresh=True)
+        text, _ = analyze_last_30_codes()
+
+        markup = InlineKeyboardMarkup(row_width=2)
+        markup.add(InlineKeyboardButton("🔄 تحديث", callback_data="refresh_last_30", style="success"))
+        markup.add(InlineKeyboardButton("🔙 رجوع", callback_data="back_to_services", style="primary"))
+        markup.add(InlineKeyboardButton("🔗 جروب البوت", url=GROUP_LINK, style="success"))
+
+        try:
+            bot.edit_message_text(text, call.message.chat.id, call.message.message_id,
+                                  parse_mode="HTML", reply_markup=markup)
+        except:
+            bot.send_message(call.message.chat.id, text, parse_mode="HTML", reply_markup=markup)
+    except Exception as e:
+        logger.error(f"خطأ تحديث: {e}")
+        bot.answer_callback_query(call.id, f"⚠️ خطأ: {e}", show_alert=True)
 
 # ═══════════════════════════════════════════════════════════════
 # 🔥 معلومات الرقم (للمالك)
@@ -1829,7 +1999,6 @@ def owner_broadcast_cb(call):
     user_states[call.from_user.id] = {"action": "owner_broadcast"}
     bot.send_message(call.message.chat.id, "📣 أرسل الرسالة:", parse_mode="HTML")
 
-# ✨ زر البث الجديد
 @bot.callback_query_handler(func=lambda call: call.data == "owner_broadcast_users")
 def owner_broadcast_users_cb(call):
     if call.from_user.id != MAIN_ADMIN_ID: return
@@ -1838,7 +2007,6 @@ def owner_broadcast_users_cb(call):
         "📢 <b>أرسل الرسالة اللي عايز تبعتها لكل مستخدمين البوت + الجروبات</b>",
         parse_mode="HTML")
 
-# ✨ زر تفعيل/تعطيل الاشتراك الإجباري
 @bot.callback_query_handler(func=lambda call: call.data == "owner_toggle_forcesub")
 def owner_toggle_forcesub_cb(call):
     if call.from_user.id != MAIN_ADMIN_ID: return
@@ -1849,7 +2017,6 @@ def owner_toggle_forcesub_cb(call):
     set_force_sub_enabled(new_state)
     status = "✅ مفعّل" if new_state else "❌ معطّل"
     bot.answer_callback_query(call.id, f"تم! الاشتراك الآن: {status}", show_alert=True)
-    # تحديث لوحة المالك
     try:
         bot.edit_message_text(get_owner_panel_text(), call.message.chat.id,
                               call.message.message_id, parse_mode="HTML",
@@ -2021,6 +2188,9 @@ def np_del_number_cb(call):
         bot.answer_callback_query(call.id, "❌")
     np_remove_number_cb(call)
 
+# ═══════════════════════════════════════════════════════════════
+# 🔥 معالج الأزرار القديمة (Copy)
+# ═══════════════════════════════════════════════════════════════
 @bot.callback_query_handler(func=lambda call: call.data.startswith("copy_") and not call.data.startswith("copy_num_"))
 def handle_copy_cb(call):
     otp = call.data.split("_", 1)[1]
@@ -2036,6 +2206,9 @@ if __name__ == "__main__":
 
     Thread(target=np_check_new_code_loop, daemon=True).start()
     logger.info("✅ فحص الأكواد فوري (كل 5 ثوان)")
+
+    Thread(target=background_last_30_updater, daemon=True).start()
+    logger.info("⏰ محدّث آخر 30 كود شغال في الخلفية (كل 30 دقيقة)")
 
     try:
         requests.get(f"https://api.telegram.org/bot{BOT_TOKEN}/deleteWebhook?drop_pending_updates=true", timeout=10)
