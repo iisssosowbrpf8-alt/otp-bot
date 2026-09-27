@@ -82,7 +82,7 @@ collected_codes = []
 available_countries_cache = {}
 
 # ═══════════════════════════════════════════════════════════════
-# 🌍 جدول أكواد الدول الدولية (مهم جداً للتحقق)
+# 🌍 جدول أكواد الدول الدولية
 # ═══════════════════════════════════════════════════════════════
 COUNTRY_PREFIXES = {
     "IL": "972", "EG": "20", "SA": "966", "AE": "971", "IQ": "964",
@@ -131,24 +131,19 @@ COUNTRY_PREFIXES = {
 def number_matches_country(number, country_code):
     """
     التأكد إن الرقم من الدولة دي بالظبط
-    - لو الدولة في الجدول: بنقارن بالكود الدولي
-    - لو مش في الجدول: نستخدم phonenumbers
     """
     cleaned = re.sub(r'\D', '', str(number))
     if not cleaned:
         return False
-    
-    # ═══ الطريقة 1: من الجدول (أسرع وأدق) ═══
+
+    # ═══ الطريقة 1: من الجدول ═══
     prefix = COUNTRY_PREFIXES.get(country_code)
     if prefix:
         return cleaned.startswith(prefix)
-    
+
     # ═══ الطريقة 2: من phonenumbers ═══
     try:
-        if not cleaned.startswith('+'):
-            cleaned_with_plus = '+' + cleaned
-        else:
-            cleaned_with_plus = cleaned
+        cleaned_with_plus = '+' + cleaned if not cleaned.startswith('+') else cleaned
         parsed = phonenumbers.parse(cleaned_with_plus, None)
         region = phonenumbers.region_code_for_number(parsed)
         return region == country_code
@@ -184,6 +179,13 @@ def clean_number(num_str):
     if num_str is None:
         return ""
     return re.sub(r'\D', '', str(num_str))
+
+def extract_otp(msg):
+    """استخراج الكود من الرسالة (زي forward.py)"""
+    if not msg:
+        return None
+    otp_match = re.search(r'\d{3}[-\s]?\d{3,4}|\d{4,8}', str(msg))
+    return otp_match.group(0) if otp_match else None
 
 # ═══════════════════════════════════════════════════════════════
 # 🗑️ حذف تلقائي
@@ -927,10 +929,11 @@ def save_np_last_code(data):
         except: pass
 
 # ═══════════════════════════════════════════════════════════════
-# ✅ جلب الأكواد من الـ Endpoint الرسمي
+# ✅ جلب آخر 20 كود
 # ═══════════════════════════════════════════════════════════════
 def np_get_latest_codes():
-    url = f"{NUMBERPANEL_BASE}/otp?count=200"
+    """✅ جلب آخر 20 كود بس من الموقع"""
+    url = f"{NUMBERPANEL_BASE}/otp?count=20"
     try:
         r = requests.get(url, timeout=15)
         if r.status_code != 200:
@@ -949,17 +952,15 @@ def np_get_latest_codes():
         return []
 
 # ═══════════════════════════════════════════════════════════════
-# ✅ دالة البحث عن رقم من دولة معينة (صارمة)
+# ✅ البحث الصارم عن رقم من دولة معينة
 # ═══════════════════════════════════════════════════════════════
 def find_number_for_country(country_code, service_key, user_id, max_attempts=15):
     """
     البحث الصارم عن رقم من دولة معينة:
-    1. بيدور في الأكواد
-    2. يتأكد إن الرقم من نفس الدولة (بالكود الدولي)
-    3. يتأكد إن الرقم مش مأخوذ قبل كده من نفس المستخدم
-    4. لو ملقاش، يرجع None
+    - بيدور في آخر 20 كود
+    - يتأكد إن الرقم من نفس الدولة
+    - لو ملقاش، يرجع None
     """
-    # الأرقام اللي المستخدم أخدها قبل كده
     user_numbers = set()
     for n in load_my_numbers():
         if n.get("added_by") == user_id:
@@ -999,16 +1000,20 @@ def find_number_for_country(country_code, service_key, user_id, max_attempts=15)
                     continue
 
                 found_number = num
+                logger.info(f"✅ لقيت رقم من {country_code}: {found_number}")
                 break
             except: continue
         if not found_number:
             attempts += 1
             time.sleep(2)
 
+    if not found_number:
+        logger.warning(f"⚠️ مفيش رقم من {country_code} في آخر 20 كود")
+
     return found_number
 
 # ═══════════════════════════════════════════════════════════════
-# 🔥 فحص الأكواد وإرسالها للجروب فوراً
+# 🔥 فحص الأكواد وإرسالها للجروب
 # ═══════════════════════════════════════════════════════════════
 def build_group_code_message(number, code_val, service, country, message=""):
     cleaned = clean_number(number)
@@ -1057,7 +1062,7 @@ def np_check_new_code_loop():
             codes_list = np_get_latest_codes()
             last_sent = load_np_last_code()
 
-            for item in codes_list[:100]:
+            for item in codes_list[:20]:
                 if not isinstance(item, (list, tuple)) or len(item) < 3:
                     if isinstance(item, dict):
                         number = item.get("number") or item.get("phone") or ""
@@ -1137,10 +1142,10 @@ def np_check_new_code_loop():
         time.sleep(0.5)
 
 # ═══════════════════════════════════════════════════════════════
-# ⚡ المحدّث السريع (كل 30 ثانية)
+# ⚡ المحدّث السريع (كل 30 ثانية) — يعتمد على آخر 20 كود
 # ═══════════════════════════════════════════════════════════════
 def cache_updater_loop():
-    logger.info("⚡ بدء المحدّث السريع...")
+    logger.info("⚡ بدء المحدّث السريع (آخر 20 كود)...")
     time.sleep(10)
 
     while True:
@@ -1153,11 +1158,8 @@ def cache_updater_loop():
             if codes:
                 added_now = 0
                 with available_countries_lock:
+                    # ✅ نبدأ من الصفر - الدول من آخر 20 كود بس
                     existing = {}
-                    for item in available_countries_cache.get("whatsapp", []):
-                        c = item.get("country")
-                        if c:
-                            existing[c] = item
 
                     for entry in codes:
                         try:
@@ -1189,11 +1191,7 @@ def cache_updater_loop():
 
                 save_available_cache()
 
-                if added_now > 0:
-                    logger.info(f"🎉 تمت إضافة {added_now} دولة جديدة! إجمالي: {total_saved}")
-                else:
-                    logger.info(f"✅ لا جديد — إجمالي الدول المحفوظة: {total_saved}")
-
+                logger.info(f"✅ إجمالي الدول المحفوظة: {total_saved}")
                 logger.info(f"📌 الدول: {sorted(existing.keys())}")
             else:
                 logger.warning("⚠️ لا توجد أكواد جديدة")
@@ -1251,7 +1249,7 @@ def get_owner_panel_text():
         f"🚫 <b>المحظورون:</b> {len(BANNED)}\n"
         f"📱 <b>الأرقام:</b> {len(load_my_numbers())}\n"
         f"🌍 <b>الدول المكتشفة:</b> {len(known)}\n"
-        f"📞 <b>دول واتساب المحفوظة:</b> {wa_count}\n"
+        f"📞 <b>دول واتساب (آخر 20 كود):</b> {wa_count}\n"
         f"📨 <b>إجمالي الأكواد:</b> {STATISTICS.get('total_codes', 0)}\n\n"
         "━━━━━━━━━━━━━━━━━━━━━━━━━━\n🎯 اختر من القائمة:"
     )
@@ -1601,7 +1599,7 @@ def handle_messages(msg):
         return
 
 # ═══════════════════════════════════════════════════════════════
-# 🔥 اختيار خدمة (واتساب بس)
+# 🔥 اختيار خدمة
 # ═══════════════════════════════════════════════════════════════
 @bot.callback_query_handler(func=lambda call: call.data.startswith("service_"))
 def service_selected(call):
@@ -1654,7 +1652,7 @@ def service_selected(call):
                           parse_mode="HTML", reply_markup=markup)
 
 # ═══════════════════════════════════════════════════════════════
-# 🔥 اختيار دولة — بحث صارم
+# 🔥 اختيار دولة
 # ═══════════════════════════════════════════════════════════════
 @bot.callback_query_handler(func=lambda call: call.data.startswith("pick_country_"))
 def pick_country_cb(call):
@@ -1676,7 +1674,6 @@ def pick_country_cb(call):
         call.message.chat.id, call.message.message_id, parse_mode="HTML"
     )
 
-    # ✅ بحث صارم عن رقم من نفس الدولة
     found_number = find_number_for_country(country_code, service_key, user_id, max_attempts=15)
 
     if found_number:
@@ -1692,7 +1689,6 @@ def pick_country_cb(call):
                               parse_mode="HTML", reply_markup=markup)
         return
 
-    # ❌ مفيش رقم من نفس الدولة
     text = (
         f"❌ <b>لا يوجد رقم {service_name} من {cname} حالياً</b>\n\n"
         f"⚠️ الأرقام المتاحة حالياً من دول تانية.\n"
@@ -1705,7 +1701,7 @@ def pick_country_cb(call):
                           parse_mode="HTML", reply_markup=markup)
 
 # ═══════════════════════════════════════════════════════════════
-# 🔥 طلب رقم جديد — بحث صارم
+# 🔥 طلب رقم جديد
 # ═══════════════════════════════════════════════════════════════
 @bot.callback_query_handler(func=lambda call: call.data.startswith("new_number_"))
 def new_number_cb(call):
@@ -1734,7 +1730,6 @@ def new_number_cb(call):
         )
     except: pass
 
-    # ✅ بحث صارم عن رقم من نفس الدولة
     found_number = find_number_for_country(country_code, service_key, user_id, max_attempts=15)
 
     if found_number:
@@ -1753,7 +1748,6 @@ def new_number_cb(call):
                                   parse_mode="HTML", reply_markup=markup)
         return
 
-    # ❌ مفيش رقم من نفس الدولة
     text = (
         f"❌ <b>لا يوجد رقم {service_name} جديد من {cname} حالياً</b>\n\n"
         f"⚠️ الأرقام المتاحة حالياً من دول تانية.\n"
@@ -2086,7 +2080,7 @@ if __name__ == "__main__":
     logger.info("🚀 بدء التشغيل...")
 
     Thread(target=cache_updater_loop, daemon=True).start()
-    logger.info("⚡ محدّث الكاش السريع شغال (كل 30 ثانية)")
+    logger.info("⚡ محدّث الكاش السريع شغال (آخر 20 كود، كل 30 ثانية)")
 
     Thread(target=np_check_new_code_loop, daemon=True).start()
     logger.info("✅ فحص الأكواد فوري (كل 0.5 ثانية)")
