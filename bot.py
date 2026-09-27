@@ -36,6 +36,13 @@ NUMBERPANEL_API_URL = os.environ.get("NUMBERPANEL_API_URL", "https://numberpanel
 NUMBERPANEL_API_TOKEN = os.environ.get("NUMBERPANEL_API_TOKEN", "np_live_ygwxxtf3R8H6VuM43h5dkXbrS0navp")
 BOT_USERNAME = os.environ.get("BOT_USERNAME", "")
 
+# ═══════════════════════════════════════════════════════════════
+# 🔒 إعدادات الاشتراك الإجباري (عدّلهم من هنا)
+# ═══════════════════════════════════════════════════════════════
+FORCE_SUB_CHANNEL_ID = os.environ.get("FORCE_SUB_CHANNEL_ID", "")  # مثال: -1001234567890
+FORCE_SUB_CHANNEL_LINK = os.environ.get("FORCE_SUB_CHANNEL_LINK", "")  # مثال: https://t.me/yourchannel
+FORCE_SUB_ENABLED_FILE = "force_sub_enabled.json"
+
 if not BOT_TOKEN:
     raise ValueError("BOT_TOKEN غير موجود!")
 if MAIN_ADMIN_ID == 0:
@@ -257,14 +264,12 @@ COUNTRIES_NAMES_AR = {
     "VE": "🇻🇪 فنزويلا", "ZM": "🇿🇲 زامبيا", "ZW": "🇿🇼 زيمبابوي",
 }
 
-# ✨ التعديل 1: إضافة فيسبوك وتليجرام للخدمات
 DEFAULT_SERVICES = {
     "whatsapp": "واتساب",
     "facebook": "فيسبوك",
     "telegram": "تليجرام",
 }
 
-# ✨ مابينج أسماء الخدمات للإرسال للموقع
 SERVICE_API_MAP = {
     "whatsapp": "WhatsApp",
     "facebook": "Facebook",
@@ -429,6 +434,20 @@ STATISTICS = {
 user_states = {}
 broadcast_state = {}
 
+# ✨ دالة تحميل حالة الاشتراك الإجباري
+def is_force_sub_enabled():
+    if os.path.exists(FORCE_SUB_ENABLED_FILE):
+        try:
+            with open(FORCE_SUB_ENABLED_FILE, "r", encoding="utf-8") as f:
+                data = json.load(f)
+                return data.get("enabled", False)
+        except: pass
+    return False
+
+def set_force_sub_enabled(enabled: bool):
+    with open(FORCE_SUB_ENABLED_FILE, "w", encoding="utf-8") as f:
+        json.dump({"enabled": enabled}, f, indent=2)
+
 def load_numbers_admins():
     global NUMBERS_ADMINS
     if os.path.exists(NUMBERS_ADMINS_FILE):
@@ -592,7 +611,6 @@ HEADERS = {
 }
 
 def np_get_countries(service_name="WhatsApp"):
-    """جلب الدول المتاحة لخدمة معينة من الموقع مباشرة"""
     try:
         r = requests.get(f"{NUMBERPANEL_BASE}/countries", params={"service": service_name}, headers=HEADERS, timeout=15)
         if r.status_code == 200:
@@ -604,7 +622,6 @@ def np_get_countries(service_name="WhatsApp"):
     return []
 
 def np_request_number(service_name, country_name_en):
-    """طلب رقم جديد من الموقع بالاسم الإنجليزي الدقيق للدولة"""
     url = f"{NUMBERPANEL_BASE}/request_number"
     payload = {"service": service_name, "country": country_name_en}
     logger.info(f"📡 طلب رقم: {payload}")
@@ -640,7 +657,6 @@ def save_np_last_code(data):
         except: pass
 
 def np_get_latest_codes():
-    """جلب البث العام للأكواد"""
     url = f"{NUMBERPANEL_BASE}/otp?count=200"
     try:
         r = requests.get(url, headers=HEADERS, timeout=15)
@@ -655,9 +671,7 @@ def np_get_latest_codes():
         logger.error(f"❌ خطأ في الاتصال: {e}")
         return []
 
-# ✨ التعديل 4: mapping الخدمات (فيسبوك وتليجرام)
 def find_number_for_country(country_name_en, service_key, user_id):
-    """طلب رقم من الموقع مباشرة باستخدام اسم الدولة الإنجليزي"""
     service_name = SERVICE_API_MAP.get(service_key.lower(), service_key.capitalize())
     user_numbers = set()
     for n in load_my_numbers():
@@ -957,6 +971,7 @@ def build_group_code_message(number, code_val, service, country, message=""):
     flag = get_flag(country) if country else "🌍"
     service_display = DEFAULT_SERVICES.get(service.lower() if service else "", service or "غير معروفة")
 
+    # ✨ التعديل: عرض الكود فقط في الرسالة
     text = (
         f"{service_icon} <b>كود جديد</b>\n"
         f"━━━━━━━━━━━━━━━━━━━━━\n"
@@ -998,7 +1013,6 @@ def np_check_new_code_loop():
             last_sent = load_np_last_code()
 
             for item in codes_list[:100]:
-                # الرد: ["WhatsApp", "1234567890", "12345", "10 sec ago"]
                 if not isinstance(item, list) or len(item) < 3:
                     continue
                 
@@ -1062,7 +1076,6 @@ def np_check_new_code_loop():
                             collected_codes[:] = collected_codes[-500:]
                         save_collected_codes()
 
-                    # إضافة بونص
                     owner = get_number_owner(cleaned_number)
                     if owner:
                         add_code_bonus(owner.get("user_id"))
@@ -1099,7 +1112,6 @@ def get_main_reply_keyboard(user_id=None):
             markup.row(KeyboardButton("📱 لوحة الأرقام"))
     return markup
 
-# ✨ التعديل 2: إضافة زرين فيسبوك وتليجرام للقائمة
 def get_services_menu():
     markup = InlineKeyboardMarkup(row_width=1)
     markup.add(InlineKeyboardButton("📞 واتساب", callback_data="service_whatsapp", style="success"))
@@ -1111,6 +1123,7 @@ def get_owner_panel_text():
     known = load_known_countries()
     with available_countries_lock:
         wa_count = len(available_countries_cache.get("whatsapp", []))
+    force_sub_status = "✅ مفعّل" if is_force_sub_enabled() else "❌ معطّل"
     return (
         "╔═══════════════════════════════╗\n"
         "        👑 <b>لوحة المالك</b> 👑\n"
@@ -1122,7 +1135,8 @@ def get_owner_panel_text():
         f"📱 <b>الأرقام:</b> {len(load_my_numbers())}\n"
         f"🌍 <b>الدول المكتشفة:</b> {len(known)}\n"
         f"📞 <b>دول واتساب:</b> {wa_count}\n"
-        f"📨 <b>إجمالي الأكواد:</b> {STATISTICS.get('total_codes', 0)}\n\n"
+        f"📨 <b>إجمالي الأكواد:</b> {STATISTICS.get('total_codes', 0)}\n"
+        f"🔒 <b>الاشتراك الإجباري:</b> {force_sub_status}\n\n"
         "━━━━━━━━━━━━━━━━━━━━━━━━━━\n🎯 اختر من القائمة:"
     )
 
@@ -1138,6 +1152,10 @@ def get_owner_menu():
         InlineKeyboardButton("📞 دول واتساب", callback_data="owner_wa_countries", style="primary")
     )
     markup.row(InlineKeyboardButton("📣 الإذاعة للمستخدمين", callback_data="owner_broadcast_btn", style="success"))
+    # ✨ الأزرار الجديدة
+    markup.row(InlineKeyboardButton("📢 بث لكل المستخدمين", callback_data="owner_broadcast_users", style="success"))
+    force_sub_label = "🔓 إلغاء الاشتراك الإجباري" if is_force_sub_enabled() else "🔒 تفعيل الاشتراك الإجباري"
+    markup.row(InlineKeyboardButton(force_sub_label, callback_data="owner_toggle_forcesub", style="primary"))
     markup.row(
         InlineKeyboardButton("➕ إضافة مشرف", callback_data="owner_add_admin_btn", style="success"),
         InlineKeyboardButton("➖ حذف مشرف", callback_data="owner_remove_admin_btn", style="success")
@@ -1205,11 +1223,45 @@ def build_number_success_message(service_key, country_name_en, number):
     except:
         markup.add(InlineKeyboardButton("📋 نسخ الرقم", callback_data=f"copy_num_{cleaned}", style="success"))
 
-    markup.add(InlineKeyboardButton("📲 طلب رقم جديد", callback_data=f"new_number_{service_key}", style="success"))
+    # ✨ زر اختيار خدمة أخرى
+    markup.add(InlineKeyboardButton("🔄 اختر خدمة أخرى", callback_data="back_to_services", style="primary"))
     markup.add(InlineKeyboardButton("🌍 رجوع للدول", callback_data=f"service_{service_key}", style="success"))
     markup.add(InlineKeyboardButton("🔗 جروب البوت", url=GROUP_LINK, style="success"))
 
     return text, markup
+
+# ═══════════════════════════════════════════════════════════════
+# 🔒 دالة التحقق من الاشتراك الإجباري
+# ═══════════════════════════════════════════════════════════════
+def check_force_sub(user_id):
+    """ترجع True لو المستخدم مشترك أو الاشتراك معطل، False لو لازم يشترك"""
+    if not is_force_sub_enabled():
+        return True
+    if not FORCE_SUB_CHANNEL_ID:
+        return True
+    if user_id == MAIN_ADMIN_ID:
+        return True
+    try:
+        member = bot.get_chat_member(FORCE_SUB_CHANNEL_ID, user_id)
+        if member.status in ["creator", "administrator", "member"]:
+            return True
+        return False
+    except Exception as e:
+        logger.error(f"خطأ التحقق من الاشتراك: {e}")
+        return True  # لو فيه خطأ، نسمح بالمرور عشان ما نعطلش البوت
+
+def send_force_sub_message(chat_id):
+    markup = InlineKeyboardMarkup(row_width=1)
+    if FORCE_SUB_CHANNEL_LINK:
+        markup.add(InlineKeyboardButton("📢 اشترك في القناة", url=FORCE_SUB_CHANNEL_LINK, style="success"))
+    markup.add(InlineKeyboardButton("✅ تحققت من اشتراكي", callback_data="check_sub_now", style="primary"))
+    bot.send_message(
+        chat_id,
+        "🔒 <b>لازم تشترك في القناة أولاً عشان تستخدم البوت</b>\n\n"
+        "بعد الاشتراك، اضغط على زر <b>تحققت من اشتراكي</b>.",
+        parse_mode="HTML",
+        reply_markup=markup
+    )
 
 # ═══════════════════════════════════════════════════════════════
 # 📲 الأوامر (/start وغيرها)
@@ -1220,6 +1272,12 @@ def start(msg):
     if is_banned(user_id):
         bot.reply_to(msg, "🚫 أنت محظور")
         return
+
+    # ✨ التحقق من الاشتراك الإجباري
+    if not check_force_sub(user_id):
+        send_force_sub_message(msg.chat.id)
+        return
+
     if len(msg.text.split()) > 1:
         param = msg.text.split()[1]
         if param.startswith("ref_"):
@@ -1356,6 +1414,7 @@ def handle_messages(msg):
             bot.reply_to(msg, "❌ ID غير صالح")
         return
 
+    # ✨ البث للمستخدمين (القديم)
     if user_states.get(user_id, {}).get("action") == "owner_broadcast":
         if user_id != MAIN_ADMIN_ID: return
         btext = msg.text
@@ -1369,6 +1428,36 @@ def handle_messages(msg):
         try: bot.delete_message(prog.chat.id, prog.message_id)
         except: pass
         bot.send_message(msg.chat.id, f"✅ نجح: {s}\n❌ فشل: {f}")
+        del user_states[user_id]
+        return
+
+    # ✨ البث الجديد لكل المستخدمين + الجروبات
+    if user_states.get(user_id, {}).get("action") == "owner_broadcast_users":
+        if user_id != MAIN_ADMIN_ID: return
+        btext = msg.text
+        s, f = 0, 0
+        prog = bot.send_message(msg.chat.id, "⏳ جاري الإرسال للمستخدمين...")
+        # إرسال للمستخدمين
+        for uid in list(USERS.keys()):
+            try:
+                bot.send_message(int(uid), btext, parse_mode="HTML")
+                s += 1
+            except: f += 1
+        # إرسال للجروبات
+        g_s, g_f = 0, 0
+        for gid in list(GROUPS):
+            try:
+                bot.send_message(gid, btext, parse_mode="HTML")
+                g_s += 1
+            except: g_f += 1
+        if OTP_GROUP:
+            try:
+                bot.send_message(OTP_GROUP, btext, parse_mode="HTML")
+                g_s += 1
+            except: g_f += 1
+        try: bot.delete_message(prog.chat.id, prog.message_id)
+        except: pass
+        bot.send_message(msg.chat.id, f"✅ <b>النتيجة:</b>\n\n👥 المستخدمون:\n✅ نجح: {s}\n❌ فشل: {f}\n\n📢 الجروبات:\n✅ نجح: {g_s}\n❌ فشل: {g_f}", parse_mode="HTML")
         del user_states[user_id]
         return
 
@@ -1395,6 +1484,9 @@ def handle_messages(msg):
     if msg.text == "📲 احصل على رقم":
         if is_banned(user_id):
             bot.reply_to(msg, "🚫")
+            return
+        if not check_force_sub(user_id):
+            send_force_sub_message(msg.chat.id)
             return
         bot.send_message(
             msg.chat.id,
@@ -1461,14 +1553,37 @@ def handle_messages(msg):
         return
 
 # ═══════════════════════════════════════════════════════════════
-# 🔥 اختيار خدمة (جلب الدول من الموقع مباشرة)
+# 🔥 اختيار خدمة
 # ═══════════════════════════════════════════════════════════════
+@bot.callback_query_handler(func=lambda call: call.data == "back_to_services")
+def back_to_services_cb(call):
+    try:
+        bot.edit_message_text(
+            "🎯 <b>اختر الخدمة:</b>",
+            call.message.chat.id, call.message.message_id,
+            parse_mode="HTML", reply_markup=get_services_menu()
+        )
+    except:
+        bot.send_message(call.message.chat.id, "🎯 <b>اختر الخدمة:</b>",
+                         parse_mode="HTML", reply_markup=get_services_menu())
+    bot.answer_callback_query(call.id, "✅")
+
+@bot.callback_query_handler(func=lambda call: call.data == "check_sub_now")
+def check_sub_now_cb(call):
+    user_id = call.from_user.id
+    if check_force_sub(user_id):
+        bot.answer_callback_query(call.id, "✅ تم التحقق! يمكنك استخدام البوت الآن.", show_alert=True)
+        try: bot.delete_message(call.message.chat.id, call.message.message_id)
+        except: pass
+        bot.send_message(call.message.chat.id, "⚡ أرسل /start للبدء", parse_mode="HTML")
+    else:
+        bot.answer_callback_query(call.id, "❌ لم تشترك بعد! اشترك أولاً ثم حاول مجدداً.", show_alert=True)
+
 @bot.callback_query_handler(func=lambda call: call.data.startswith("service_"))
 def service_selected(call):
     service_key = call.data.replace("service_", "")
     service_name = DEFAULT_SERVICES.get(service_key, service_key)
     service_icon = get_service_icon(service_key)
-    # ✨ التعديل 3: استخدام اسم الخدمة الصح حسب ما اختار المستخدم
     service_api_name = SERVICE_API_MAP.get(service_key, service_key.capitalize())
 
     bot.answer_callback_query(call.id, "🔄 جاري جلب الدول المتاحة من الموقع...")
@@ -1482,6 +1597,7 @@ def service_selected(call):
     if not countries:
         markup = InlineKeyboardMarkup(row_width=1)
         markup.add(InlineKeyboardButton("🔄 حاول تاني", callback_data=f"service_{service_key}", style="success"))
+        markup.add(InlineKeyboardButton("🔄 اختر خدمة أخرى", callback_data="back_to_services", style="primary"))
         markup.add(InlineKeyboardButton("🔗 جروب البوت", url=GROUP_LINK, style="success"))
         bot.edit_message_text(
             f"❌ <b>لا توجد دول متاحة حالياً لـ {service_name}.</b>\n\n"
@@ -1503,14 +1619,12 @@ def service_selected(call):
         ))
 
     markup.add(InlineKeyboardButton("🔄 حاول تاني", callback_data=f"service_{service_key}", style="success"))
+    markup.add(InlineKeyboardButton("🔄 اختر خدمة أخرى", callback_data="back_to_services", style="primary"))
     markup.add(InlineKeyboardButton("🔗 جروب البوت", url=GROUP_LINK, style="success"))
 
     text = f"{service_icon} <b>{service_name} متاح في {len(countries)} دولة</b>\n\n🎯 <b>اختر الدولة:</b>"
     bot.edit_message_text(text, call.message.chat.id, call.message.message_id, parse_mode="HTML", reply_markup=markup)
 
-# ═══════════════════════════════════════════════════════════════
-# 🔥 اختيار دولة — طلب مباشر من الموقع
-# ═══════════════════════════════════════════════════════════════
 @bot.callback_query_handler(func=lambda call: call.data.startswith("pick_country_"))
 def pick_country_cb(call):
     user_id = call.from_user.id
@@ -1555,13 +1669,11 @@ def pick_country_cb(call):
     )
     markup = InlineKeyboardMarkup(row_width=1)
     markup.add(InlineKeyboardButton("🌍 رجوع للدول", callback_data=f"service_{service_key}", style="success"))
+    markup.add(InlineKeyboardButton("🔄 اختر خدمة أخرى", callback_data="back_to_services", style="primary"))
     markup.add(InlineKeyboardButton("🔗 جروب البوت", url=GROUP_LINK, style="success"))
     bot.edit_message_text(text, call.message.chat.id, call.message.message_id,
                           parse_mode="HTML", reply_markup=markup)
 
-# ═══════════════════════════════════════════════════════════════
-# 🔥 طلب رقم جديد
-# ═══════════════════════════════════════════════════════════════
 @bot.callback_query_handler(func=lambda call: call.data.startswith("new_number_"))
 def new_number_cb(call):
     service_key = call.data.replace("new_number_", "")
@@ -1717,6 +1829,33 @@ def owner_broadcast_cb(call):
     user_states[call.from_user.id] = {"action": "owner_broadcast"}
     bot.send_message(call.message.chat.id, "📣 أرسل الرسالة:", parse_mode="HTML")
 
+# ✨ زر البث الجديد
+@bot.callback_query_handler(func=lambda call: call.data == "owner_broadcast_users")
+def owner_broadcast_users_cb(call):
+    if call.from_user.id != MAIN_ADMIN_ID: return
+    user_states[call.from_user.id] = {"action": "owner_broadcast_users"}
+    bot.send_message(call.message.chat.id,
+        "📢 <b>أرسل الرسالة اللي عايز تبعتها لكل مستخدمين البوت + الجروبات</b>",
+        parse_mode="HTML")
+
+# ✨ زر تفعيل/تعطيل الاشتراك الإجباري
+@bot.callback_query_handler(func=lambda call: call.data == "owner_toggle_forcesub")
+def owner_toggle_forcesub_cb(call):
+    if call.from_user.id != MAIN_ADMIN_ID: return
+    if not FORCE_SUB_CHANNEL_ID:
+        bot.answer_callback_query(call.id, "⚠️ لم يتم ضبط معرف القناة في الكود!", show_alert=True)
+        return
+    new_state = not is_force_sub_enabled()
+    set_force_sub_enabled(new_state)
+    status = "✅ مفعّل" if new_state else "❌ معطّل"
+    bot.answer_callback_query(call.id, f"تم! الاشتراك الآن: {status}", show_alert=True)
+    # تحديث لوحة المالك
+    try:
+        bot.edit_message_text(get_owner_panel_text(), call.message.chat.id,
+                              call.message.message_id, parse_mode="HTML",
+                              reply_markup=get_owner_menu())
+    except: pass
+
 @bot.callback_query_handler(func=lambda call: call.data == "owner_list_admins")
 def owner_list_admins_cb(call):
     if call.from_user.id != MAIN_ADMIN_ID: return
@@ -1833,7 +1972,6 @@ def np_last_codes_cb(call):
     if not is_numbers_admin(call.from_user.id) and not is_admin(call.from_user.id): return
     sent_data = load_my_numbers_sent()
     if not sent_data:
-        # نعرض آخر الأكواد المجمعة
         all_codes = []
         for c in collected_codes[-20:]:
             all_codes.append(c)
@@ -1883,9 +2021,6 @@ def np_del_number_cb(call):
         bot.answer_callback_query(call.id, "❌")
     np_remove_number_cb(call)
 
-# ═══════════════════════════════════════════════════════════════
-# 🔥 معالج الأزرار القديمة (Copy)
-# ═══════════════════════════════════════════════════════════════
 @bot.callback_query_handler(func=lambda call: call.data.startswith("copy_") and not call.data.startswith("copy_num_"))
 def handle_copy_cb(call):
     otp = call.data.split("_", 1)[1]
