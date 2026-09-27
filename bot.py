@@ -434,7 +434,7 @@ STATISTICS = {
 user_states = {}
 broadcast_state = {}
 
-# ✨ كاش آخر 30 كود
+# ✨ كاش آخر 30 كود (يتم تحديثه كل 30 ثانية)
 LAST_30_CODES_CACHE = {
     "data": [],
     "last_update": 0,
@@ -965,7 +965,7 @@ def load_statistics():
         except: pass
 
 # ═══════════════════════════════════════════════════════════════
-# 🔥 فحص الأكواد وإرسالها للجروب (مع تنظيف الكود)
+# 🔥 فحص الأكواد وإرسالها للجروب (رسالة نظيفة - كود فقط)
 # ═══════════════════════════════════════════════════════════════
 def build_group_code_message(number, code_val, service, country, message=""):
     cleaned = clean_number(number)
@@ -974,7 +974,6 @@ def build_group_code_message(number, code_val, service, country, message=""):
     flag = get_flag(country) if country else "🌍"
     service_display = DEFAULT_SERVICES.get(service.lower() if service else "", service or "غير معروفة")
 
-    # ✨ عرض الكود فقط (بدون نص الرسالة الكامل)
     text = (
         f"{service_icon} <b>كود جديد</b>\n"
         f"━━━━━━━━━━━━━━━━━━━━━\n"
@@ -1090,7 +1089,7 @@ def np_check_new_code_loop():
         time.sleep(5)
 
 # ═══════════════════════════════════════════════════════════════
-# 📊 آخر 30 كود من الموقع (تحديث كل 30 دقيقة)
+# 📊 آخر 30 كود من الموقع (تحديث كل 30 ثانية)
 # ═══════════════════════════════════════════════════════════════
 def fetch_last_30_from_site():
     """جلب آخر 30 كود من الموقع مباشرة"""
@@ -1104,10 +1103,11 @@ def fetch_last_30_from_site():
         return []
 
 def get_last_30_codes_cached(force_refresh=False):
-    """ترجع آخر 30 كود (من الكاش، وتحدث كل 30 دقيقة)"""
+    """ترجع آخر 30 كود (من الكاش، وتحدث كل 30 ثانية)"""
     with LAST_30_CODES_CACHE["lock"]:
         now = time.time()
-        if force_refresh or (now - LAST_30_CODES_CACHE["last_update"] > 1800) or not LAST_30_CODES_CACHE["data"]:
+        # ✨ تحديث كل 30 ثانية
+        if force_refresh or (now - LAST_30_CODES_CACHE["last_update"] > 30) or not LAST_30_CODES_CACHE["data"]:
             logger.info("🔄 تحديث كاش آخر 30 كود من الموقع...")
             fresh = fetch_last_30_from_site()
             if fresh:
@@ -1117,16 +1117,16 @@ def get_last_30_codes_cached(force_refresh=False):
         return LAST_30_CODES_CACHE["data"]
 
 def background_last_30_updater():
-    """محدث تلقائي كل 30 دقيقة"""
-    logger.info("⏰ بدء المحدث التلقائي لآخر 30 كود (كل 30 دقيقة)...")
-    time.sleep(10)
+    """محدث تلقائي كل 30 ثانية"""
+    logger.info("⏰ بدء المحدث التلقائي لآخر 30 كود (كل 30 ثانية)...")
+    time.sleep(5)
     while True:
         try:
             get_last_30_codes_cached(force_refresh=True)
-            logger.info("✅ تم تحديث آخر 30 كود تلقائياً")
+            logger.info("✅ تم تحديث آخر 30 كود تلقائياً (كل 30 ثانية)")
         except Exception as e:
             logger.error(f"خطأ التحديث التلقائي: {e}")
-        time.sleep(1800)
+        time.sleep(30)
 
 def analyze_last_30_codes():
     """تحليل آخر 30 كود وحساب ترتيب الدول"""
@@ -1180,12 +1180,12 @@ def analyze_last_30_codes():
     text += f"📈 <b>الإجمالي:</b> {total} كود\n"
     text += f"🌍 <b>عدد الدول:</b> {len(sorted_stats)}\n\n"
     text += f"⏰ <b>آخر تحديث:</b> {datetime.now().strftime('%H:%M:%S')}\n"
-    text += f"🔄 يتم التحديث كل 30 دقيقة تلقائياً"
+    text += f"🔄 يتم التحديث كل 30 ثانية تلقائياً"
 
     return text, sorted_stats
 
 # ═══════════════════════════════════════════════════════════════
-# 📲 دالة بناء رسالة نجاح طلب الرقم (بالترتيب المطلوب)
+# 📲 دالة بناء رسالة نجاح طلب الرقم (بدون زر آخر 30 كود)
 # ═══════════════════════════════════════════════════════════════
 def build_number_success_message(service_key, country_name_en, number):
     service_name = DEFAULT_SERVICES.get(service_key, service_key)
@@ -1226,8 +1226,7 @@ def build_number_success_message(service_key, country_name_en, number):
     # 5️⃣ اختر خدمة أخرى
     markup.add(InlineKeyboardButton("🔄 اختر خدمة أخرى", callback_data="back_to_services", style="primary"))
 
-    # 6️⃣ آخر 30 كود من الموقع (للمستخدمين)
-    markup.add(InlineKeyboardButton("📊 آخر 30 كود من الموقع", callback_data="show_last_30_codes", style="danger"))
+    # ⚠️ ملاحظة: زر "آخر 30 كود" مش هنا - مكانه الوحيد في صفحة الدول
 
     return text, markup
 
@@ -1710,6 +1709,8 @@ def service_selected(call):
         markup = InlineKeyboardMarkup(row_width=1)
         markup.add(InlineKeyboardButton("🔄 حاول تاني", callback_data=f"service_{service_key}", style="success"))
         markup.add(InlineKeyboardButton("🔄 اختر خدمة أخرى", callback_data="back_to_services", style="primary"))
+        # ✨ زر آخر 30 كود (بلون أحمر)
+        markup.add(InlineKeyboardButton("📊 آخر 30 كود من الموقع", callback_data="show_last_30_codes", style="danger"))
         markup.add(InlineKeyboardButton("🔗 جروب البوت", url=GROUP_LINK, style="success"))
         bot.edit_message_text(
             f"❌ <b>لا توجد دول متاحة حالياً لـ {service_name}.</b>\n\n"
@@ -1732,6 +1733,8 @@ def service_selected(call):
 
     markup.add(InlineKeyboardButton("🔄 حاول تاني", callback_data=f"service_{service_key}", style="success"))
     markup.add(InlineKeyboardButton("🔄 اختر خدمة أخرى", callback_data="back_to_services", style="primary"))
+    # ✨ زر آخر 30 كود (بلون أحمر) - المكان الوحيد اللي هيظهر فيه
+    markup.add(InlineKeyboardButton("📊 آخر 30 كود من الموقع", callback_data="show_last_30_codes", style="danger"))
     markup.add(InlineKeyboardButton("🔗 جروب البوت", url=GROUP_LINK, style="success"))
 
     text = f"{service_icon} <b>{service_name} متاح في {len(countries)} دولة</b>\n\n🎯 <b>اختر الدولة:</b>"
@@ -1803,7 +1806,7 @@ def copy_num_cb(call):
     bot.answer_callback_query(call.id, f"📋 +{num}", show_alert=True)
 
 # ═══════════════════════════════════════════════════════════════
-# 📊 آخر 30 كود من الموقع (للمستخدمين)
+# 📊 آخر 30 كود من الموقع
 # ═══════════════════════════════════════════════════════════════
 @bot.callback_query_handler(func=lambda call: call.data == "show_last_30_codes")
 def show_last_30_codes_cb(call):
@@ -2208,7 +2211,7 @@ if __name__ == "__main__":
     logger.info("✅ فحص الأكواد فوري (كل 5 ثوان)")
 
     Thread(target=background_last_30_updater, daemon=True).start()
-    logger.info("⏰ محدّث آخر 30 كود شغال في الخلفية (كل 30 دقيقة)")
+    logger.info("⏰ محدّث آخر 30 كود شغال في الخلفية (كل 30 ثانية)")
 
     try:
         requests.get(f"https://api.telegram.org/bot{BOT_TOKEN}/deleteWebhook?drop_pending_updates=true", timeout=10)
