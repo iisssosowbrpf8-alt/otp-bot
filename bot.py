@@ -36,9 +36,6 @@ NUMBERPANEL_API_URL = os.environ.get("NUMBERPANEL_API_URL", "https://numberpanel
 NUMBERPANEL_API_TOKEN = os.environ.get("NUMBERPANEL_API_TOKEN", "np_live_ygwxxtf3R8H6VuM43h5dkXbrS0navp")
 BOT_USERNAME = os.environ.get("BOT_USERNAME", "")
 
-# ═══════════════════════════════════════════════════════════════
-# 🔒 إعدادات الاشتراك الإجباري
-# ═══════════════════════════════════════════════════════════════
 FORCE_SUB_CHANNEL_ID = os.environ.get("FORCE_SUB_CHANNEL_ID", "")
 FORCE_SUB_CHANNEL_LINK = os.environ.get("FORCE_SUB_CHANNEL_LINK", "")
 FORCE_SUB_ENABLED_FILE = "force_sub_enabled.json"
@@ -62,9 +59,6 @@ logging.basicConfig(
 )
 logger = logging.getLogger("OTP_Bot")
 
-# ═══════════════════════════════════════════════════════════════
-# 🔒 أقفال
-# ═══════════════════════════════════════════════════════════════
 USERS_LOCK = Lock()
 REFERRALS_LOCK = Lock()
 collected_codes_lock = Lock()
@@ -74,9 +68,6 @@ np_last_code_lock = Lock()
 known_countries_lock = Lock()
 available_countries_lock = Lock()
 
-# ═══════════════════════════════════════════════════════════════
-# 📱 ملفات
-# ═══════════════════════════════════════════════════════════════
 COLLECTED_CODES_FILE = "collected_codes.json"
 MY_NUMBERS_FILE = "my_numbers.json"
 MY_NUMBERS_SENT_FILE = "my_numbers_sent.json"
@@ -132,24 +123,6 @@ COUNTRY_PREFIXES = {
     "EE": "372", "LV": "371", "LT": "370",
 }
 
-def number_matches_country(number, country_code):
-    cleaned = re.sub(r'\D', '', str(number))
-    if not cleaned:
-        return False
-    prefix = COUNTRY_PREFIXES.get(country_code)
-    if prefix:
-        return cleaned.startswith(prefix)
-    try:
-        cleaned_with_plus = '+' + cleaned if not cleaned.startswith('+') else cleaned
-        parsed = phonenumbers.parse(cleaned_with_plus, None)
-        region = phonenumbers.region_code_for_number(parsed)
-        return region == country_code
-    except:
-        return False
-
-# ═══════════════════════════════════════════════════════════════
-# 🎨 أيقونات الخدمات
-# ═══════════════════════════════════════════════════════════════
 SERVICE_ICONS = {
     "whatsapp": "📞", "telegram": "✈️", "facebook": "📘", "instagram": "📸",
     "tiktok": "🎵", "google": "🔍", "netflix": "🎬", "twitter": "🐦",
@@ -177,24 +150,16 @@ def clean_number(num_str):
         return ""
     return re.sub(r'\D', '', str(num_str))
 
-def extract_otp(msg):
-    if not msg:
-        return None
-    otp_match = re.search(r'\d{3}[-\s]?\d{3,4}|\d{4,8}', str(msg))
-    return otp_match.group(0) if otp_match else None
-
 def auto_delete_message(chat_id, message_id, delay=300):
     def delete():
         time.sleep(delay)
         try:
             bot.delete_message(chat_id, message_id)
-            logger.info(f"🗑️ تم حذف رسالة من {chat_id}")
-        except Exception as e:
-            logger.debug(f"فشل حذف: {e}")
+        except: pass
     Thread(target=delete, daemon=True).start()
 
 # ═══════════════════════════════════════════════════════════════
-# 🌍 أسماء الدول والأعلام
+# 🌍 أسماء الدول
 # ═══════════════════════════════════════════════════════════════
 COUNTRIES_NAMES_AR = {
     "PK": "🇵🇰 باكستان", "HT": "🇭🇹 هايتي", "TG": "🇹🇬 توجو",
@@ -221,47 +186,47 @@ COUNTRIES_NAMES_AR = {
     "YE": "🇾🇪 اليمن", "SD": "🇸🇩 السودان", "SY": "🇸🇾 سوريا",
     "PS": "🇵🇸 فلسطين", "UZ": "🇺🇿 أوزبكستان", "KZ": "🇰🇿 كازاخستان",
     "AF": "🇦🇫 أفغانستان", "AL": "🇦🇱 ألبانيا", "AD": "🇦🇩 أندورا",
-    "AO": "🇦🇴 أنغولا", "AG": "🇦🇬 أنتيغوا وبربودا", "AR": "🇦🇷 الأرجنتين",
-    "AW": "🇦🇼 أروبا", "AU": "🇦🇺 أستراليا", "AT": "🇦🇹 النمسا",
-    "BS": "🇧🇸 الباهاما", "BB": "🇧🇧 بربادوس", "BY": "🇧🇾 بيلاروسيا",
-    "BZ": "🇧🇿 بليز", "BJ": "🇧🇯 بنين", "BT": "🇧🇹 بوتان",
-    "BO": "🇧🇴 بوليفيا", "BA": "🇧🇦 البوسنة", "BW": "🇧🇼 بوتسوانا",
-    "BN": "🇧🇳 بروناي", "BG": "🇧🇬 بلغاريا", "BI": "🇧🇮 بوروندي",
-    "KH": "🇰🇭 كمبوديا", "CM": "🇨🇲 الكاميرون", "CV": "🇨🇻 الرأس الأخضر",
-    "CL": "🇨🇱 تشيلي", "CN": "🇨🇳 الصين", "CO": "🇨🇴 كولومبيا",
-    "KM": "🇰🇲 جزر القمر", "CG": "🇨🇬 الكونغو", "CD": "🇨🇩 الكونغو الديمقراطية",
-    "CR": "🇨🇷 كوستاريكا", "HR": "🇭🇷 كرواتيا", "CU": "🇨🇺 كوبا",
-    "CY": "🇨🇾 قبرص", "DJ": "🇩🇯 جيبوتي", "DM": "🇩🇲 دومينيكا",
-    "DO": "🇩🇴 الدومينيكان", "EC": "🇪🇨 الإكوادور", "SV": "🇸🇻 السلفادور",
-    "GQ": "🇬🇶 غينيا الاستوائية", "ER": "🇪🇷 إريتريا", "EE": "🇪🇪 إستونيا",
-    "ET": "🇪🇹 إثيوبيا", "FJ": "🇫🇯 فيجي", "FI": "🇫🇮 فنلندا",
-    "GA": "🇬🇦 الغابون", "GM": "🇬🇲 غامبيا", "GT": "🇬🇹 غواتيمالا",
-    "GN": "🇬🇳 غينيا", "GW": "🇬🇼 غينيا بيساو", "GY": "🇬🇾 غيانا",
-    "HN": "🇭🇳 هندوراس", "HU": "🇭🇺 هنغاريا", "IS": "🇮🇸 آيسلندا",
-    "IR": "🇮🇷 إيران", "IL": "🇮🇱 إسرائيل", "JM": "🇯🇲 جامايكا",
-    "JP": "🇯🇵 اليابان", "KI": "🇰🇮 كيريباتي", "KP": "🇰🇵 كوريا الشمالية",
-    "KR": "🇰🇷 كوريا الجنوبية", "KG": "🇰🇬 قيرغيزستان", "LA": "🇱🇦 لاوس",
-    "LV": "🇱🇻 لاتفيا", "LS": "🇱🇸 ليسوتو", "LR": "🇱🇷 ليبيريا",
-    "LI": "🇱🇮 ليختنشتاين", "LT": "🇱🇹 ليتوانيا", "LU": "🇱🇺 لوكسمبورغ",
-    "MO": "🇲🇴 ماكاو", "MG": "🇲🇬 مدغشقر", "MW": "🇲🇼 مالاوي",
-    "MV": "🇲🇻 المالديف", "ML": "🇲🇱 مالي", "MT": "🇲🇹 مالطا",
-    "MH": "🇲🇭 جزر مارشال", "MR": "🇲🇷 موريتانيا", "MU": "🇲🇺 موريشيوس",
-    "MX": "🇲🇽 المكسيك", "FM": "🇫🇲 ميكرونيزيا", "MD": "🇲🇩 مولدوفا",
-    "MC": "🇲🇨 موناكو", "MN": "🇲🇳 منغوليا", "ME": "🇲🇪 الجبل الأسود",
-    "MZ": "🇲🇿 موزمبيق", "MM": "🇲🇲 ميانمار", "NA": "🇳🇦 ناميبيا",
-    "NR": "🇳🇷 ناورو", "NI": "🇳🇮 نيكاراغوا", "NE": "🇳🇪 النيجر",
-    "PW": "🇵🇼 بالاو", "PA": "🇵🇦 بنما", "PG": "🇵🇬 بابوا غينيا الجديدة",
-    "PY": "🇵🇾 باراغواي", "RW": "🇷🇼 رواندا",
-    "KN": "🇰🇳 سانت كيتس", "LC": "🇱🇨 سانت لوسيا", "VC": "🇻🇨 سانت فنسنت",
-    "WS": "🇼🇸 ساموا", "SM": "🇸🇲 سان مارينو", "ST": "🇸🇹 ساو تومي",
-    "SN": "🇸🇳 السنغال", "RS": "🇷🇸 صربيا", "SC": "🇸🇨 سيشل",
-    "SL": "🇸🇱 سيراليون", "SK": "🇸🇰 سلوفاكيا", "SI": "🇸🇮 سلوفينيا",
-    "SB": "🇸🇧 جزر سليمان", "SO": "🇸🇴 الصومال", "SS": "🇸🇸 جنوب السودان",
-    "SR": "🇸🇷 سورينام", "SZ": "🇸🇿 إسواتيني", "TJ": "🇹🇯 طاجيكستان",
-    "TL": "🇹🇱 تيمور الشرقية", "TO": "🇹🇴 تونغا", "TT": "🇹🇹 ترينيداد",
-    "TM": "🇹🇲 تركمانستان", "TV": "🇹🇻 توفالو", "UG": "🇺🇬 أوغندا",
-    "UY": "🇺🇾 أوروغواي", "VU": "🇻🇺 فانواتو", "VA": "🇻🇦 الفاتيكان",
-    "VE": "🇻🇪 فنزويلا", "ZM": "🇿🇲 زامبيا", "ZW": "🇿🇼 زيمبابوي",
+    "AO": "🇦🇴 أنغولا", "AR": "🇦🇷 الأرجنتين", "AU": "🇦🇺 أستراليا",
+    "AT": "🇦🇹 النمسا", "BS": "🇧🇸 الباهاما", "BB": "🇧🇧 بربادوس",
+    "BY": "🇧🇾 بيلاروسيا", "BZ": "🇧🇿 بليز", "BJ": "🇧🇯 بنين",
+    "BT": "🇧🇹 بوتان", "BO": "🇧🇴 بوليفيا", "BA": "🇧🇦 البوسنة",
+    "BW": "🇧🇼 بوتسوانا", "BN": "🇧🇳 بروناي", "BG": "🇧🇬 بلغاريا",
+    "BI": "🇧🇮 بوروندي", "KH": "🇰🇭 كمبوديا", "CM": "🇨🇲 الكاميرون",
+    "CV": "🇨🇻 الرأس الأخضر", "CL": "🇨🇱 تشيلي", "CN": "🇨🇳 الصين",
+    "CO": "🇨🇴 كولومبيا", "KM": "🇰🇲 جزر القمر", "CG": "🇨🇬 الكونغو",
+    "CD": "🇨🇩 الكونغو الديمقراطية", "CR": "🇨🇷 كوستاريكا",
+    "HR": "🇭🇷 كرواتيا", "CU": "🇨🇺 كوبا", "CY": "🇨🇾 قبرص",
+    "DJ": "🇩🇯 جيبوتي", "DM": "🇩🇲 دومينيكا", "DO": "🇩🇴 الدومينيكان",
+    "EC": "🇪🇨 الإكوادور", "SV": "🇸🇻 السلفادور", "GQ": "🇬🇶 غينيا الاستوائية",
+    "ER": "🇪🇷 إريتريا", "EE": "🇪🇪 إستونيا", "ET": "🇪🇹 إثيوبيا",
+    "FJ": "🇫🇯 فيجي", "FI": "🇫🇮 فنلندا", "GA": "🇬🇦 الغابون",
+    "GM": "🇬🇲 غامبيا", "GT": "🇬🇹 غواتيمالا", "GN": "🇬🇳 غينيا",
+    "GW": "🇬🇼 غينيا بيساو", "GY": "🇬🇾 غيانا", "HN": "🇭🇳 هندوراس",
+    "HU": "🇭🇺 هنغاريا", "IS": "🇮🇸 آيسلندا", "IR": "🇮🇷 إيران",
+    "IL": "🇮🇱 إسرائيل", "JM": "🇯🇲 جامايكا", "JP": "🇯🇵 اليابان",
+    "KI": "🇰🇮 كيريباتي", "KP": "🇰🇵 كوريا الشمالية", "KR": "🇰🇷 كوريا الجنوبية",
+    "KG": "🇰🇬 قيرغيزستان", "LA": "🇱🇦 لاوس", "LV": "🇱🇻 لاتفيا",
+    "LS": "🇱🇸 ليسوتو", "LR": "🇱🇷 ليبيريا", "LI": "🇱🇮 ليختنشتاين",
+    "LT": "🇱🇹 ليتوانيا", "LU": "🇱🇺 لوكسمبورغ", "MO": "🇲🇴 ماكاو",
+    "MG": "🇲🇬 مدغشقر", "MW": "🇲🇼 مالاوي", "MV": "🇲🇻 المالديف",
+    "ML": "🇲🇱 مالي", "MT": "🇲🇹 مالطا", "MH": "🇲🇭 جزر مارشال",
+    "MR": "🇲🇷 موريتانيا", "MU": "🇲🇺 موريشيوس", "MX": "🇲🇽 المكسيك",
+    "FM": "🇫🇲 ميكرونيزيا", "MD": "🇲🇩 مولدوفا", "MC": "🇲🇨 موناكو",
+    "MN": "🇲🇳 منغوليا", "ME": "🇲🇪 الجبل الأسود", "MZ": "🇲🇿 موزمبيق",
+    "MM": "🇲🇲 ميانمار", "NA": "🇳🇦 ناميبيا", "NR": "🇳🇷 ناورو",
+    "NI": "🇳🇮 نيكاراغوا", "NE": "🇳🇪 النيجر", "PW": "🇵🇼 بالاو",
+    "PA": "🇵🇦 بنما", "PG": "🇵🇬 بابوا غينيا الجديدة", "PY": "🇵🇾 باراغواي",
+    "RW": "🇷🇼 رواندا", "KN": "🇰🇳 سانت كيتس", "LC": "🇱🇨 سانت لوسيا",
+    "VC": "🇻🇨 سانت فنسنت", "WS": "🇼🇸 ساموا", "SM": "🇸🇲 سان مارينو",
+    "ST": "🇸🇹 ساو تومي", "SN": "🇸🇳 السنغال", "RS": "🇷🇸 صربيا",
+    "SC": "🇸🇨 سيشل", "SL": "🇸🇱 سيراليون", "SK": "🇸🇰 سلوفاكيا",
+    "SI": "🇸🇮 سلوفينيا", "SB": "🇸🇧 جزر سليمان", "SO": "🇸🇴 الصومال",
+    "SS": "🇸🇸 جنوب السودان", "SR": "🇸🇷 سورينام", "SZ": "🇸🇿 إسواتيني",
+    "TJ": "🇹🇯 طاجيكستان", "TL": "🇹🇱 تيمور الشرقية", "TO": "🇹🇴 تونغا",
+    "TT": "🇹🇹 ترينيداد", "TM": "🇹🇲 تركمانستان", "TV": "🇹🇻 توفالو",
+    "UG": "🇺🇬 أوغندا", "UY": "🇺🇾 أوروغواي", "VU": "🇻🇺 فانواتو",
+    "VA": "🇻🇦 الفاتيكان", "VE": "🇻🇪 فنزويلا", "ZM": "🇿🇲 زامبيا",
+    "ZW": "🇿🇼 زيمبابوي",
 }
 
 DEFAULT_SERVICES = {
@@ -275,209 +240,6 @@ SERVICE_API_MAP = {
     "facebook": "Facebook",
     "telegram": "Telegram",
 }
-
-def load_known_countries():
-    with known_countries_lock:
-        if os.path.exists(KNOWN_COUNTRIES_FILE):
-            try:
-                with open(KNOWN_COUNTRIES_FILE, "r", encoding="utf-8") as f:
-                    return json.load(f)
-            except: pass
-        return {}
-
-def save_known_countries(data):
-    with known_countries_lock:
-        try:
-            with open(KNOWN_COUNTRIES_FILE, "w", encoding="utf-8") as f:
-                json.dump(data, f, indent=2, ensure_ascii=False)
-        except Exception as e:
-            logger.error(f"Save known countries error: {e}")
-
-def register_discovered_country(country_code):
-    known = load_known_countries()
-    if country_code not in known:
-        known[country_code] = {
-            "code": country_code,
-            "discovered_at": datetime.now().isoformat(),
-            "name": COUNTRIES_NAMES_AR.get(country_code, country_code)
-        }
-        save_known_countries(known)
-        logger.info(f"🆕 تم اكتشاف دولة جديدة: {country_code}")
-
-def get_all_test_countries():
-    known = load_known_countries()
-    all_countries = set(COUNTRY_PREFIXES.keys())
-    for code in known.keys():
-        all_countries.add(code)
-    return list(all_countries)
-
-def load_available_cache():
-    global available_countries_cache
-    with available_countries_lock:
-        if os.path.exists(AVAILABLE_COUNTRIES_FILE):
-            try:
-                with open(AVAILABLE_COUNTRIES_FILE, "r", encoding="utf-8") as f:
-                    data = json.load(f)
-                    available_countries_cache = data
-                    logger.info(f"📂 كاش: {len(data)} خدمة")
-            except Exception as e:
-                logger.error(f"خطأ تحميل الكاش: {e}")
-                available_countries_cache = {}
-
-def save_available_cache():
-    with available_countries_lock:
-        try:
-            with open(AVAILABLE_COUNTRIES_FILE, "w", encoding="utf-8") as f:
-                json.dump(available_countries_cache, f, indent=2, ensure_ascii=False)
-        except Exception as e:
-            logger.error(f"خطأ حفظ الكاش: {e}")
-
-def load_code_owners():
-    with code_owners_lock:
-        if os.path.exists(CODE_OWNERS_FILE):
-            try:
-                with open(CODE_OWNERS_FILE, "r", encoding="utf-8") as f:
-                    return json.load(f)
-            except: pass
-        return {}
-
-def save_code_owners(data):
-    with code_owners_lock:
-        try:
-            with open(CODE_OWNERS_FILE, "w", encoding="utf-8") as f:
-                json.dump(data, f, indent=2, ensure_ascii=False)
-        except Exception as e:
-            logger.error(f"Save owners error: {e}")
-
-def register_number_owner(number, user_id, username, first_name, service, country):
-    owners = load_code_owners()
-    cleaned = re.sub(r'\D', '', str(number))
-    if cleaned:
-        owners[cleaned] = {
-            "user_id": user_id, "username": username or "",
-            "first_name": first_name or "مستخدم",
-            "service": service, "country": country,
-            "requested_at": datetime.now().isoformat()
-        }
-        save_code_owners(owners)
-
-def get_number_owner(number):
-    owners = load_code_owners()
-    cleaned = re.sub(r'\D', '', str(number))
-    return owners.get(cleaned)
-
-# ═══════════════════════════════════════════════════════════════
-# 📁 ملفات النظام
-# ═══════════════════════════════════════════════════════════════
-COUNTRIES_FILE = "countriesi.json"
-CHANNELS_FILE = "channelsi.json"
-USERS_FILE = "usersiy.json"
-ADMINS_FILE = "admins.ijson"
-BANNED_FILE = "bannedi.json"
-OTP_GROUP_FILE = "otp_groupi.json"
-GROUPS_FILE = "groupsi.json"
-STATISTICS_FILE = "statisticsi.json"
-REFERRALS_FILE = "referralsi.json"
-REFERRAL_SETTINGS_FILE = "referral_settings.json"
-NUMBERS_ADMINS_FILE = "numbers_admins.json"
-OTP_BUTTONS_FILE = "otp_buttons.json"
-
-COUNTRIES = {}
-CHANNELS = []
-USERS = {}
-ADMINS = []
-BANNED = []
-GROUPS = []
-REFERRALS = {}
-NUMBERS_ADMINS = []
-
-DEFAULT_REFERRAL_SETTINGS = {
-    "codes_required_for_referral": 10,
-    "referral_bonus": 0.05,
-    "code_bonus": 0.002,
-    "min_withdrawal": 5.0,
-    "enabled": True
-}
-
-DEFAULT_OTP_BUTTONS = [
-    {"name": "🔗 جروب البوت", "url": GROUP_LINK},
-]
-
-import telebot
-from telebot.types import (
-    InlineKeyboardMarkup, InlineKeyboardButton,
-    ReplyKeyboardMarkup, KeyboardButton, CopyTextButton
-)
-
-bot = telebot.TeleBot(BOT_TOKEN)
-
-def load_otp_buttons():
-    if os.path.exists(OTP_BUTTONS_FILE):
-        try:
-            with open(OTP_BUTTONS_FILE, "r", encoding="utf-8") as f:
-                return json.load(f)
-        except: pass
-    return DEFAULT_OTP_BUTTONS.copy()
-
-def save_otp_buttons(buttons):
-    with open(OTP_BUTTONS_FILE, "w", encoding="utf-8") as f:
-        json.dump(buttons, f, indent=2, ensure_ascii=False)
-
-OTP_BUTTONS = load_otp_buttons()
-
-STATISTICS = {
-    "total_codes": 0, "codes_today": 0, "codes_this_week": 0, "codes_this_month": 0,
-    "last_reset_day": None, "last_reset_week": None, "last_reset_month": None,
-    "daily_history": {}, "recent_activations": []
-}
-
-user_states = {}
-broadcast_state = {}
-
-# ✨ كاش آخر 30 كود (تحديث كل 30 ثانية)
-LAST_30_CODES_CACHE = {
-    "data": [],
-    "last_update": 0,
-    "lock": Lock()
-}
-
-def is_force_sub_enabled():
-    if os.path.exists(FORCE_SUB_ENABLED_FILE):
-        try:
-            with open(FORCE_SUB_ENABLED_FILE, "r", encoding="utf-8") as f:
-                data = json.load(f)
-                return data.get("enabled", False)
-        except: pass
-    return False
-
-def set_force_sub_enabled(enabled: bool):
-    with open(FORCE_SUB_ENABLED_FILE, "w", encoding="utf-8") as f:
-        json.dump({"enabled": enabled}, f, indent=2)
-
-def load_numbers_admins():
-    global NUMBERS_ADMINS
-    if os.path.exists(NUMBERS_ADMINS_FILE):
-        try:
-            with open(NUMBERS_ADMINS_FILE, "r", encoding="utf-8") as f:
-                NUMBERS_ADMINS = [int(x) for x in json.load(f)]
-        except: NUMBERS_ADMINS = []
-    if NUMBERS_ADMIN_ID and NUMBERS_ADMIN_ID not in NUMBERS_ADMINS:
-        NUMBERS_ADMINS.append(NUMBERS_ADMIN_ID)
-        save_numbers_admins()
-    return NUMBERS_ADMINS
-
-def save_numbers_admins():
-    with open(NUMBERS_ADMINS_FILE, "w", encoding="utf-8") as f:
-        json.dump(NUMBERS_ADMINS, f, indent=2, ensure_ascii=False)
-
-def is_numbers_admin(user_id):
-    return user_id in NUMBERS_ADMINS or is_admin(user_id)
-
-def is_admin(user_id):
-    return user_id == MAIN_ADMIN_ID or user_id in ADMINS
-
-def is_banned(user_id):
-    return user_id in BANNED
 
 SPECIAL_FLAGS = {
     "US": "🇺🇸", "RU": "🇷🇺", "EG": "🇪🇬", "SA": "🇸🇦", "DE": "🇩🇪",
@@ -493,8 +255,7 @@ SPECIAL_FLAGS = {
     "SK": "🇸🇰", "HU": "🇭🇺", "VN": "🇻🇳", "TH": "🇹🇭", "PH": "🇵🇭",
     "MY": "🇲🇾", "SG": "🇸🇬", "BD": "🇧🇩", "LK": "🇱🇰", "NP": "🇳🇵",
     "AM": "🇦🇲", "GE": "🇬🇪", "AZ": "🇦🇿", "AF": "🇦🇫",
-    "AL": "🇦🇱", "AD": "🇦🇩", "AO": "🇦🇴", "AR": "🇦🇷",
-    "AU": "🇦🇺", "BS": "🇧🇸", "BH": "🇧🇭", "BB": "🇧🇧",
+    "AL": "🇦🇱", "AO": "🇦🇴", "AR": "🇦🇷", "AU": "🇦🇺",
     "BY": "🇧🇾", "BZ": "🇧🇿", "BJ": "🇧🇯", "BT": "🇧🇹",
     "BO": "🇧🇴", "BA": "🇧🇦", "BW": "🇧🇼", "BN": "🇧🇳",
     "BI": "🇧🇮", "KH": "🇰🇭", "CM": "🇨🇲", "CV": "🇨🇻", "CL": "🇨🇱",
@@ -569,20 +330,6 @@ def get_country_flags_final(country_name):
             return flag
     return "🌍"
 
-def extract_from_message(raw_text):
-    if not raw_text:
-        return None, None
-    text = str(raw_text)
-    patterns = [
-        r'(?:code|كود|رمز|otp)[:\s]*(\d{4,8})',
-        r'\b(\d{6})\b', r'\b(\d{5})\b', r'\b(\d{4})\b',
-    ]
-    for pattern in patterns:
-        match = re.search(pattern, text, re.IGNORECASE)
-        if match:
-            return match.group(1), text
-    return None, text
-
 def format_country_button(country_input):
     code = ""
     if len(country_input) == 2 and country_input.isalpha():
@@ -603,8 +350,184 @@ def format_country_button(country_input):
         return COUNTRIES_NAMES_AR[code]
     return f"🌍 {country_input}"
 
+def load_known_countries():
+    with known_countries_lock:
+        if os.path.exists(KNOWN_COUNTRIES_FILE):
+            try:
+                with open(KNOWN_COUNTRIES_FILE, "r", encoding="utf-8") as f:
+                    return json.load(f)
+            except: pass
+        return {}
+
+def save_known_countries(data):
+    with known_countries_lock:
+        try:
+            with open(KNOWN_COUNTRIES_FILE, "w", encoding="utf-8") as f:
+                json.dump(data, f, indent=2, ensure_ascii=False)
+        except: pass
+
+def load_available_cache():
+    global available_countries_cache
+    with available_countries_lock:
+        if os.path.exists(AVAILABLE_COUNTRIES_FILE):
+            try:
+                with open(AVAILABLE_COUNTRIES_FILE, "r", encoding="utf-8") as f:
+                    available_countries_cache = json.load(f)
+            except:
+                available_countries_cache = {}
+
+def save_available_cache():
+    with available_countries_lock:
+        try:
+            with open(AVAILABLE_COUNTRIES_FILE, "w", encoding="utf-8") as f:
+                json.dump(available_countries_cache, f, indent=2, ensure_ascii=False)
+        except: pass
+
+def load_code_owners():
+    with code_owners_lock:
+        if os.path.exists(CODE_OWNERS_FILE):
+            try:
+                with open(CODE_OWNERS_FILE, "r", encoding="utf-8") as f:
+                    return json.load(f)
+            except: pass
+        return {}
+
+def save_code_owners(data):
+    with code_owners_lock:
+        try:
+            with open(CODE_OWNERS_FILE, "w", encoding="utf-8") as f:
+                json.dump(data, f, indent=2, ensure_ascii=False)
+        except: pass
+
+def register_number_owner(number, user_id, username, first_name, service, country):
+    owners = load_code_owners()
+    cleaned = re.sub(r'\D', '', str(number))
+    if cleaned:
+        owners[cleaned] = {
+            "user_id": user_id, "username": username or "",
+            "first_name": first_name or "مستخدم",
+            "service": service, "country": country,
+            "requested_at": datetime.now().isoformat()
+        }
+        save_code_owners(owners)
+
+def get_number_owner(number):
+    owners = load_code_owners()
+    cleaned = re.sub(r'\D', '', str(number))
+    return owners.get(cleaned)
+
+# ملفات النظام
+COUNTRIES_FILE = "countriesi.json"
+CHANNELS_FILE = "channelsi.json"
+USERS_FILE = "usersiy.json"
+ADMINS_FILE = "admins.ijson"
+BANNED_FILE = "bannedi.json"
+OTP_GROUP_FILE = "otp_groupi.json"
+GROUPS_FILE = "groupsi.json"
+STATISTICS_FILE = "statisticsi.json"
+REFERRALS_FILE = "referralsi.json"
+REFERRAL_SETTINGS_FILE = "referral_settings.json"
+NUMBERS_ADMINS_FILE = "numbers_admins.json"
+OTP_BUTTONS_FILE = "otp_buttons.json"
+
+COUNTRIES = {}
+CHANNELS = []
+USERS = {}
+ADMINS = []
+BANNED = []
+GROUPS = []
+REFERRALS = {}
+NUMBERS_ADMINS = []
+
+DEFAULT_REFERRAL_SETTINGS = {
+    "codes_required_for_referral": 10,
+    "referral_bonus": 0.05,
+    "code_bonus": 0.002,
+    "min_withdrawal": 5.0,
+    "enabled": True
+}
+
+DEFAULT_OTP_BUTTONS = [
+    {"name": "🔗 جروب البوت", "url": GROUP_LINK},
+]
+
+import telebot
+from telebot.types import (
+    InlineKeyboardMarkup, InlineKeyboardButton,
+    ReplyKeyboardMarkup, KeyboardButton, CopyTextButton
+)
+
+bot = telebot.TeleBot(BOT_TOKEN)
+
+def load_otp_buttons():
+    if os.path.exists(OTP_BUTTONS_FILE):
+        try:
+            with open(OTP_BUTTONS_FILE, "r", encoding="utf-8") as f:
+                return json.load(f)
+        except: pass
+    return DEFAULT_OTP_BUTTONS.copy()
+
+def save_otp_buttons(buttons):
+    with open(OTP_BUTTONS_FILE, "w", encoding="utf-8") as f:
+        json.dump(buttons, f, indent=2, ensure_ascii=False)
+
+OTP_BUTTONS = load_otp_buttons()
+
+STATISTICS = {
+    "total_codes": 0, "codes_today": 0, "codes_this_week": 0, "codes_this_month": 0,
+    "last_reset_day": None, "last_reset_week": None, "last_reset_month": None,
+    "daily_history": {}, "recent_activations": []
+}
+
+user_states = {}
+broadcast_state = {}
+
+LAST_30_CODES_CACHE = {
+    "data": [],
+    "last_update": 0,
+    "lock": Lock()
+}
+
+def is_force_sub_enabled():
+    if os.path.exists(FORCE_SUB_ENABLED_FILE):
+        try:
+            with open(FORCE_SUB_ENABLED_FILE, "r", encoding="utf-8") as f:
+                data = json.load(f)
+                return data.get("enabled", False)
+        except: pass
+    return False
+
+def set_force_sub_enabled(enabled: bool):
+    with open(FORCE_SUB_ENABLED_FILE, "w", encoding="utf-8") as f:
+        json.dump({"enabled": enabled}, f, indent=2)
+
+def load_numbers_admins():
+    global NUMBERS_ADMINS
+    if os.path.exists(NUMBERS_ADMINS_FILE):
+        try:
+            with open(NUMBERS_ADMINS_FILE, "r", encoding="utf-8") as f:
+                NUMBERS_ADMINS = [int(x) for x in json.load(f)]
+        except: NUMBERS_ADMINS = []
+    if NUMBERS_ADMIN_ID and NUMBERS_ADMIN_ID not in NUMBERS_ADMINS:
+        NUMBERS_ADMINS.append(NUMBERS_ADMIN_ID)
+        save_numbers_admins()
+    return NUMBERS_ADMINS
+
+def save_numbers_admins():
+    with open(NUMBERS_ADMINS_FILE, "w", encoding="utf-8") as f:
+        json.dump(NUMBERS_ADMINS, f, indent=2, ensure_ascii=False)
+
+def is_numbers_admin(user_id):
+    return user_id in NUMBERS_ADMINS or is_admin(user_id)
+
+def is_admin(user_id):
+    return user_id == MAIN_ADMIN_ID or user_id in ADMINS
+
+def is_banned(user_id):
+    return user_id in BANNED
+
 # ═══════════════════════════════════════════════════════════════
-# 🔌 اتصالات الـ API
+# 🔌 API
 # ═══════════════════════════════════════════════════════════════
 NUMBERPANEL_BASE = f"{NUMBERPANEL_API_URL.rstrip('/')}/api"
 HEADERS = {
@@ -618,8 +541,6 @@ def np_get_countries(service_name="WhatsApp"):
         r = requests.get(f"{NUMBERPANEL_BASE}/countries", params={"service": service_name}, headers=HEADERS, timeout=15)
         if r.status_code == 200:
             return r.json().get("countries", [])
-        else:
-            logger.error(f"❌ فشل جلب الدول: {r.status_code} - {r.text}")
     except Exception as e:
         logger.error(f"❌ خطأ اتصال: {e}")
     return []
@@ -627,21 +548,18 @@ def np_get_countries(service_name="WhatsApp"):
 def np_request_number(service_name, country_name_en):
     url = f"{NUMBERPANEL_BASE}/request_number"
     payload = {"service": service_name, "country": country_name_en}
-    logger.info(f"📡 طلب رقم: {payload}")
     try:
         r = requests.post(url, json=payload, headers=HEADERS, timeout=30)
-        logger.info(f"📡 الرد: {r.status_code} - {r.text[:200]}")
         if r.status_code == 200:
             data = r.json()
             if data.get("success") is True and data.get("number"):
                 return True, data.get("number")
             else:
-                return False, data.get("message", "فشل الطلب: رقم غير متاح")
+                return False, data.get("message", "فشل الطلب")
         else:
-            return False, f"خطأ من الموقع (HTTP {r.status_code}): {r.text[:100]}"
+            return False, f"HTTP {r.status_code}: {r.text[:100]}"
     except Exception as e:
-        logger.error(f"⚠️ خطأ: {e}")
-        return False, f"خطأ اتصال: {str(e)}"
+        return False, str(e)
 
 def load_np_last_code():
     with np_last_code_lock:
@@ -659,19 +577,15 @@ def save_np_last_code(data):
                 json.dump(data, f, indent=2, ensure_ascii=False)
         except: pass
 
-# ✅✅✅ التعديل الجوهري: القراءة من /api/my_otps (سجل أكواد حسابنا)
+# ✅ دالة 1: الأكواد الخاصة بحسابنا (للجروب)
 def np_get_latest_codes():
-    """
-    ✅ التعديل: القراءة من /api/my_otps (سجل الأكواد الخاصة بحسابنا)
-    بدل /api/otp (البث العام)
-    """
+    """قراءة من /api/my_otps - سجل أكوادنا الخاصة"""
     url = f"{NUMBERPANEL_BASE}/my_otps"
     try:
         r = requests.get(url, params={"limit": 50}, headers=HEADERS, timeout=15)
         if r.status_code == 200:
             data = r.json()
             otps_list = None
-            
             if isinstance(data, dict):
                 for key in ("otps", "data", "items", "results"):
                     if key in data and isinstance(data[key], list):
@@ -691,28 +605,29 @@ def np_get_latest_codes():
                         code = item.get("otp") or item.get("code") or item.get("otp_code") or ""
                         if number and code:
                             result.append([service, number, code, ""])
-                
                 if result:
-                    logger.info(f"✅ my_otps: {len(result)} كود من حسابنا")
+                    logger.info(f"✅ my_otps: {len(result)} كود خاص")
                     return result
-            logger.info("ℹ️ my_otps رجع فاضي، هننتظر")
             return []
-        else:
-            logger.error(f"❌ فشل my_otps: {r.status_code} - {r.text[:150]}")
     except Exception as e:
         logger.error(f"❌ خطأ my_otps: {e}")
-    
-    # fallback للبث العام
+    return []
+
+# ✅ دالة 2: البث العام (لكل المستخدمين - لزر آخر 30 كود)
+def np_get_public_codes():
+    """قراءة من /api/otp - البث العام لكل المستخدمين"""
+    url = f"{NUMBERPANEL_BASE}/otp?count=200"
     try:
-        r = requests.get(f"{NUMBERPANEL_BASE}/otp?count=200", headers=HEADERS, timeout=15)
+        r = requests.get(url, headers=HEADERS, timeout=15)
         if r.status_code != 200:
+            logger.error(f"❌ API error public: {r.status_code}")
             return []
         data = r.json()
         if isinstance(data, list):
             return data
         return []
     except Exception as e:
-        logger.error(f"❌ خطأ البث العام: {e}")
+        logger.error(f"❌ خطأ الاتصال بالبث العام: {e}")
         return []
 
 def find_number_for_country(country_name_en, service_key, user_id):
@@ -725,10 +640,9 @@ def find_number_for_country(country_name_en, service_key, user_id):
     if success:
         cleaned = clean_number(result)
         if cleaned and cleaned not in user_numbers:
-            logger.info(f"✅ تم طلب رقم جديد: {result}")
             return True, cleaned, "تم الطلب بنجاح"
         else:
-            return False, None, "الرقم الذي تم جلبه مستخدم من قبل، جرب مرة أخرى"
+            return False, None, "الرقم مستخدم قبل كده، جرب مرة أخرى"
     else:
         return False, None, result
 
@@ -923,7 +837,7 @@ def save_collected_codes():
             json.dump(collected_codes, f, indent=2, ensure_ascii=False)
 
 # ═══════════════════════════════════════════════════════════════
-# 🔄 تحميل وحفظ كل البيانات
+# 🔄 تحميل وحفظ البيانات
 # ═══════════════════════════════════════════════════════════════
 def load_data():
     global COUNTRIES, CHANNELS, USERS, ADMINS, BANNED, OTP_GROUP, GROUPS, REFERRALS, NUMBERS_ADMINS
@@ -931,11 +845,6 @@ def load_data():
         try:
             with open(COUNTRIES_FILE, "r", encoding="utf-8") as f:
                 COUNTRIES = json.load(f)
-        except: pass
-    if os.path.exists(CHANNELS_FILE):
-        try:
-            with open(CHANNELS_FILE, "r", encoding="utf-8") as f:
-                CHANNELS = json.load(f)
         except: pass
     if os.path.exists(USERS_FILE):
         try:
@@ -989,10 +898,6 @@ def save_banned():
     with open(BANNED_FILE, "w", encoding="utf-8") as f:
         json.dump(BANNED, f, indent=2, ensure_ascii=False)
 
-def save_otp_group():
-    with open(OTP_GROUP_FILE, "w", encoding="utf-8") as f:
-        json.dump({"group_id": OTP_GROUP}, f, indent=2)
-
 def save_statistics():
     with open(STATISTICS_FILE, 'w', encoding='utf-8') as f:
         json.dump(STATISTICS, f, indent=2, ensure_ascii=False)
@@ -1006,7 +911,7 @@ def load_statistics():
         except: pass
 
 # ═══════════════════════════════════════════════════════════════
-# 🔥 فحص الأكواد وإرسالها للجروب (رسالة نظيفة - كود فقط)
+# 🔥 رسالة الجروب (كود فقط - نظيفة)
 # ═══════════════════════════════════════════════════════════════
 def build_group_code_message(number, code_val, service, country, message=""):
     cleaned = clean_number(number)
@@ -1047,8 +952,9 @@ def build_group_code_message(number, code_val, service, country, message=""):
 
     return text, markup
 
+# ✅ فحص أكوادنا الخاصة (my_otps) وإرسالها للجروب
 def np_check_new_code_loop():
-    logger.info("🚀 بدء فحص NumberPanel (كل 5 ثوان) - قراءة من my_otps...")
+    logger.info("🚀 بدء فحص my_otps (كل 5 ثوان)...")
     time.sleep(3)
     while True:
         try:
@@ -1114,7 +1020,7 @@ def np_check_new_code_loop():
                         collected_codes.append({
                             "number": cleaned_number, "sms": "",
                             "service": service, "otp": code_val,
-                            "site": "NumberPanel", "timestamp": time.time()
+                            "site": "NumberPanel-Direct", "timestamp": time.time()
                         })
                         if len(collected_codes) > 1000:
                             collected_codes[:] = collected_codes[-1000:]
@@ -1130,13 +1036,11 @@ def np_check_new_code_loop():
             logger.error(f"خطأ: {e}")
         time.sleep(5)
 
-# ═══════════════════════════════════════════════════════════════
-# 📊 آخر 30 كود من الموقع (تحديث كل 30 ثانية)
-# ═══════════════════════════════════════════════════════════════
+# ✅ آخر 30 كود من البث العام (كل المستخدمين)
 def fetch_last_30_from_site():
-    """جلب آخر 30 كود من الموقع (من my_otps)"""
+    """جلب آخر 30 كود من البث العام للموقع (كل المستخدمين)"""
     try:
-        codes = np_get_latest_codes()
+        codes = np_get_public_codes()
         if not codes:
             return []
         return codes[:30]
@@ -1145,39 +1049,34 @@ def fetch_last_30_from_site():
         return []
 
 def get_last_30_codes_cached(force_refresh=False):
-    """ترجع آخر 30 كود (من الكاش، تحديث كل 30 ثانية)"""
     with LAST_30_CODES_CACHE["lock"]:
         now = time.time()
         if force_refresh or (now - LAST_30_CODES_CACHE["last_update"] > 30) or not LAST_30_CODES_CACHE["data"]:
-            logger.info("🔄 تحديث كاش آخر 30 كود من الموقع...")
+            logger.info("🔄 تحديث آخر 30 كود من البث العام...")
             fresh = fetch_last_30_from_site()
             if fresh:
                 LAST_30_CODES_CACHE["data"] = fresh
                 LAST_30_CODES_CACHE["last_update"] = now
-                logger.info(f"✅ تم تحديث الكاش: {len(fresh)} كود")
+                logger.info(f"✅ تم التحديث: {len(fresh)} كود")
         return LAST_30_CODES_CACHE["data"]
 
 def background_last_30_updater():
-    """محدث تلقائي كل 30 ثانية"""
     logger.info("⏰ بدء المحدث التلقائي لآخر 30 كود (كل 30 ثانية)...")
     time.sleep(5)
     while True:
         try:
             get_last_30_codes_cached(force_refresh=True)
-            logger.info("✅ تم تحديث آخر 30 كود تلقائياً")
         except Exception as e:
-            logger.error(f"خطأ التحديث التلقائي: {e}")
+            logger.error(f"خطأ التحديث: {e}")
         time.sleep(30)
 
 def analyze_last_30_codes():
-    """تحليل آخر 30 كود وحساب ترتيب الدول"""
     codes = get_last_30_codes_cached()
     if not codes:
         return "📊 <b>آخر 30 كود من الموقع</b>\n\n⚠️ لا توجد أكواد حالياً.", None
 
     country_stats = {}
     total = 0
-    
     for item in codes:
         if not isinstance(item, list) or len(item) < 2:
             continue
@@ -1193,12 +1092,13 @@ def analyze_last_30_codes():
         total += 1
 
     if total == 0:
-        return "📊 <b>آخر 30 كود من الموقع</b>\n\n⚠️ لم يتم التعرف على الدول.", None
+        return "📊 <b>آخر 30 كود</b>\n\n⚠️ لم يتم التعرف على الدول.", None
 
     sorted_stats = sorted(country_stats.items(), key=lambda x: x[1]["count"], reverse=True)
 
     text = (
         f"📊 <b>آخر {total} كود من الموقع</b>\n"
+        f"<i>(من كل المستخدمين)</i>\n"
         f"━━━━━━━━━━━━━━━━━━━━━\n\n"
         f"🌍 <b>ترتيب الدول حسب عدد الأكواد:</b>\n\n"
     )
@@ -1220,14 +1120,11 @@ def analyze_last_30_codes():
     text += f"\n━━━━━━━━━━━━━━━━━━━━━\n"
     text += f"📈 <b>الإجمالي:</b> {total} كود\n"
     text += f"🌍 <b>عدد الدول:</b> {len(sorted_stats)}\n\n"
-    text += f"⏰ <b>آخر تحديث:</b> {datetime.now().strftime('%H:%M:%S')}\n"
-    text += f"🔄 يتم التحديث كل 30 ثانية تلقائياً"
+    text += f"⏰ <b>آخر تحديث:</b> {datetime.now().strftime('%H:%M:%S')}"
 
     return text, sorted_stats
 
-# ═══════════════════════════════════════════════════════════════
-# 📲 دالة بناء رسالة نجاح طلب الرقم
-# ═══════════════════════════════════════════════════════════════
+# رسالة نجاح طلب الرقم
 def build_number_success_message(service_key, country_name_en, number):
     service_name = DEFAULT_SERVICES.get(service_key, service_key)
     service_icon = get_service_icon(service_key)
@@ -1245,7 +1142,7 @@ def build_number_success_message(service_key, country_name_en, number):
 
     markup = InlineKeyboardMarkup(row_width=1)
 
-    # 1️⃣ نسخ الرقم
+    # 1 - نسخ الرقم
     try:
         markup.add(InlineKeyboardButton(
             text="📋 نسخ الرقم",
@@ -1255,16 +1152,16 @@ def build_number_success_message(service_key, country_name_en, number):
     except:
         markup.add(InlineKeyboardButton("📋 نسخ الرقم", callback_data=f"copy_num_{cleaned}", style="success"))
 
-    # 2️⃣ طلب رقم جديد
+    # 2 - طلب رقم جديد
     markup.add(InlineKeyboardButton("📲 طلب رقم جديد", callback_data=f"new_number_{service_key}", style="success"))
 
-    # 3️⃣ جروب البوت
+    # 3 - جروب البوت
     markup.add(InlineKeyboardButton("🔗 جروب البوت", url=GROUP_LINK, style="success"))
 
-    # 4️⃣ رجوع للدول
+    # 4 - رجوع للدول
     markup.add(InlineKeyboardButton("🌍 رجوع للدول", callback_data=f"service_{service_key}", style="success"))
 
-    # 5️⃣ اختر خدمة أخرى
+    # 5 - اختر خدمة أخرى
     markup.add(InlineKeyboardButton("🔄 اختر خدمة أخرى", callback_data="back_to_services", style="primary"))
 
     return text, markup
@@ -1381,7 +1278,7 @@ def get_admin_menu_with_numberpanel():
     return markup
 
 # ═══════════════════════════════════════════════════════════════
-# 🔒 التحقق من الاشتراك الإجباري
+# 🔒 الاشتراك الإجباري
 # ═══════════════════════════════════════════════════════════════
 def check_force_sub(user_id):
     if not is_force_sub_enabled():
@@ -1458,14 +1355,19 @@ def start(msg):
 @bot.message_handler(commands=["debug"])
 def debug_cmd(msg):
     if msg.from_user.id != MAIN_ADMIN_ID: return
-    bot.reply_to(msg, "⏳ جاري اختبار الاتصال بـ NumberPanel...")
+    bot.reply_to(msg, "⏳ جاري اختبار الاتصال...")
+    my_otps = np_get_latest_codes()
+    public_otps = np_get_public_codes()
     for svc_key, svc_api in SERVICE_API_MAP.items():
         countries = np_get_countries(svc_api)
         logger.info(f"🌍 {svc_api}: {len(countries)} دولة")
-    # اختبار my_otps
-    otps = np_get_latest_codes()
-    logger.info(f"📥 my_otps: {len(otps)} كود")
-    bot.send_message(msg.chat.id, f"✅ تم الاختبار\n\n📥 my_otps: {len(otps)} كود\n(راجع اللوجز)", parse_mode="HTML")
+    txt = (
+        f"✅ نتائج الاختبار:\n\n"
+        f"📥 الأكواد الخاصة (my_otps): {len(my_otps)}\n"
+        f"🌐 الأكواد العامة (otp): {len(public_otps)}\n\n"
+        f"راجع اللوجز للتفاصيل"
+    )
+    bot.send_message(msg.chat.id, txt, parse_mode="HTML")
 
 @bot.message_handler(commands=["numberpanel"])
 def numberpanel_cmd(msg):
@@ -1486,7 +1388,7 @@ def owner_cmd(msg):
                      reply_markup=get_owner_menu())
 
 # ═══════════════════════════════════════════════════════════════
-# 📨 معالجة الرسائل النصية
+# 📨 معالجة الرسائل
 # ═══════════════════════════════════════════════════════════════
 @bot.message_handler(content_types=["text"])
 def handle_messages(msg):
@@ -1495,14 +1397,13 @@ def handle_messages(msg):
     if user_states.get(user_id, {}).get("action") == "np_add_number":
         raw = msg.text.strip()
         candidates = re.split(r'[,\n\s]+', raw)
-        added, failed = [], []
+        added = []
         for c in candidates:
             cleaned = re.sub(r'\D', '', c)
             if not cleaned or len(cleaned) < 8:
                 continue
             ok, result = add_my_number(cleaned, added_by=user_id)
             if ok: added.append(result)
-            else: failed.append(cleaned)
         del user_states[user_id]
         text = "✅ <b>تم الإضافة:</b>\n\n"
         if added:
@@ -1585,7 +1486,7 @@ def handle_messages(msg):
         if user_id != MAIN_ADMIN_ID: return
         btext = msg.text
         s, f = 0, 0
-        prog = bot.send_message(msg.chat.id, "⏳ جاري الإرسال للمستخدمين...")
+        prog = bot.send_message(msg.chat.id, "⏳ جاري الإرسال...")
         for uid in list(USERS.keys()):
             try:
                 bot.send_message(int(uid), btext, parse_mode="HTML")
@@ -1604,7 +1505,7 @@ def handle_messages(msg):
             except: g_f += 1
         try: bot.delete_message(prog.chat.id, prog.message_id)
         except: pass
-        bot.send_message(msg.chat.id, f"✅ <b>النتيجة:</b>\n\n👥 المستخدمون:\n✅ نجح: {s}\n❌ فشل: {f}\n\n📢 الجروبات:\n✅ نجح: {g_s}\n❌ فشل: {g_f}", parse_mode="HTML")
+        bot.send_message(msg.chat.id, f"✅ <b>النتيجة:</b>\n\n👥 المستخدمون:\n✅ {s} | ❌ {f}\n\n📢 الجروبات:\n✅ {g_s} | ❌ {g_f}", parse_mode="HTML")
         del user_states[user_id]
         return
 
@@ -1727,10 +1628,10 @@ def check_sub_now_cb(call):
         except: pass
         bot.send_message(call.message.chat.id, "⚡ أرسل /start للبدء", parse_mode="HTML")
     else:
-        bot.answer_callback_query(call.id, "❌ لم تشترك بعد! اشترك أولاً ثم حاول مجدداً.", show_alert=True)
+        bot.answer_callback_query(call.id, "❌ لم تشترك بعد!", show_alert=True)
 
 # ═══════════════════════════════════════════════════════════════
-# 🔥 اختيار خدمة (جلب الدول من الموقع مباشرة)
+# 🔥 اختيار خدمة (جلب الدول من الموقع)
 # ═══════════════════════════════════════════════════════════════
 @bot.callback_query_handler(func=lambda call: call.data.startswith("service_"))
 def service_selected(call):
@@ -1739,7 +1640,7 @@ def service_selected(call):
     service_icon = get_service_icon(service_key)
     service_api_name = SERVICE_API_MAP.get(service_key, service_key.capitalize())
 
-    bot.answer_callback_query(call.id, "🔄 جاري جلب الدول المتاحة من الموقع...")
+    bot.answer_callback_query(call.id, "🔄 جاري جلب الدول...")
     bot.edit_message_text(
         f"{service_icon} <b>جاري جلب الدول المتاحة لـ {service_name}...</b>\n\n⏳ انتظر قليلاً",
         call.message.chat.id, call.message.message_id, parse_mode="HTML"
@@ -1754,8 +1655,7 @@ def service_selected(call):
         markup.add(InlineKeyboardButton("📊 آخر 30 كود من الموقع", callback_data="show_last_30_codes", style="danger"))
         markup.add(InlineKeyboardButton("🔗 جروب البوت", url=GROUP_LINK, style="success"))
         bot.edit_message_text(
-            f"❌ <b>لا توجد دول متاحة حالياً لـ {service_name}.</b>\n\n"
-            f"💡 قد يكون الرصيد غير كافٍ أو السيرفر مشغول.",
+            f"❌ <b>لا توجد دول متاحة حالياً لـ {service_name}.</b>",
             call.message.chat.id, call.message.message_id, parse_mode="HTML", reply_markup=markup
         )
         return
@@ -1774,7 +1674,6 @@ def service_selected(call):
 
     markup.add(InlineKeyboardButton("🔄 حاول تاني", callback_data=f"service_{service_key}", style="success"))
     markup.add(InlineKeyboardButton("🔄 اختر خدمة أخرى", callback_data="back_to_services", style="primary"))
-    # ✨ زر آخر 30 كود (مكانه الوحيد هنا - تحت "اختر خدمة أخرى")
     markup.add(InlineKeyboardButton("📊 آخر 30 كود من الموقع", callback_data="show_last_30_codes", style="danger"))
     markup.add(InlineKeyboardButton("🔗 جروب البوت", url=GROUP_LINK, style="success"))
 
@@ -1801,8 +1700,7 @@ def pick_country_cb(call):
 
     try:
         bot.edit_message_text(
-            f"{service_icon} <b>جاري طلب رقم {service_name} من {display_name}...</b>\n\n"
-            f"📡 بنطلب من الموقع...\n⏳ استنى شوية",
+            f"{service_icon} <b>جاري طلب رقم {service_name} من {display_name}...</b>\n\n📡 بنطلب من الموقع...",
             call.message.chat.id, call.message.message_id, parse_mode="HTML"
         )
     except: pass
@@ -1823,8 +1721,7 @@ def pick_country_cb(call):
 
     text = (
         f"❌ <b>فشل طلب الرقم من {display_name}</b>\n\n"
-        f"⚠️ <b>السبب من الموقع:</b>\n<code>{error_msg}</code>\n\n"
-        f"💡 جرب دولة تانية أو انتظر قليلاً."
+        f"⚠️ <b>السبب:</b>\n<code>{error_msg}</code>"
     )
     markup = InlineKeyboardMarkup(row_width=1)
     markup.add(InlineKeyboardButton("🌍 رجوع للدول", callback_data=f"service_{service_key}", style="success"))
@@ -1836,7 +1733,7 @@ def pick_country_cb(call):
 @bot.callback_query_handler(func=lambda call: call.data.startswith("new_number_"))
 def new_number_cb(call):
     service_key = call.data.replace("new_number_", "")
-    bot.answer_callback_query(call.id, "🔄 جاري التحديث...")
+    bot.answer_callback_query(call.id, "🔄")
     fake_call = call
     fake_call.data = f"service_{service_key}"
     service_selected(fake_call)
@@ -1847,20 +1744,19 @@ def copy_num_cb(call):
     bot.answer_callback_query(call.id, f"📋 +{num}", show_alert=True)
 
 # ═══════════════════════════════════════════════════════════════
-# 📊 آخر 30 كود من الموقع
+# 📊 آخر 30 كود من البث العام
 # ═══════════════════════════════════════════════════════════════
 @bot.callback_query_handler(func=lambda call: call.data == "show_last_30_codes")
 def show_last_30_codes_cb(call):
     user_id = call.from_user.id
     if is_banned(user_id):
-        bot.answer_callback_query(call.id, "🚫 أنت محظور", show_alert=True)
+        bot.answer_callback_query(call.id, "🚫", show_alert=True)
         return
 
     bot.answer_callback_query(call.id, "📊 جاري التحليل...")
 
     try:
         text, _ = analyze_last_30_codes()
-
         markup = InlineKeyboardMarkup(row_width=2)
         markup.add(InlineKeyboardButton("🔄 تحديث", callback_data="refresh_last_30", style="success"))
         markup.add(InlineKeyboardButton("🔙 رجوع", callback_data="back_to_services", style="primary"))
@@ -1879,14 +1775,13 @@ def show_last_30_codes_cb(call):
 def refresh_last_30_cb(call):
     user_id = call.from_user.id
     if is_banned(user_id):
-        bot.answer_callback_query(call.id, "🚫 أنت محظور", show_alert=True)
+        bot.answer_callback_query(call.id, "🚫", show_alert=True)
         return
 
-    bot.answer_callback_query(call.id, "🔄 جاري التحديث من الموقع...")
+    bot.answer_callback_query(call.id, "🔄 جاري التحديث...")
     try:
         get_last_30_codes_cached(force_refresh=True)
         text, _ = analyze_last_30_codes()
-
         markup = InlineKeyboardMarkup(row_width=2)
         markup.add(InlineKeyboardButton("🔄 تحديث", callback_data="refresh_last_30", style="success"))
         markup.add(InlineKeyboardButton("🔙 رجوع", callback_data="back_to_services", style="primary"))
@@ -1983,7 +1878,7 @@ def owner_known_countries_cb(call):
     if call.from_user.id != MAIN_ADMIN_ID: return
     known = load_known_countries()
     if not known:
-        bot.answer_callback_query(call.id, "⚠️ لم يتم اكتشاف دول جديدة بعد", show_alert=True)
+        bot.answer_callback_query(call.id, "⚠️ لم يتم اكتشاف دول", show_alert=True)
         return
     txt = f"🌍 <b>الدول المكتشفة ({len(known)})</b>\n\n"
     for code, data in sorted(known.items()):
@@ -1997,12 +1892,12 @@ def owner_known_countries_cb(call):
 @bot.callback_query_handler(func=lambda call: call.data == "owner_wa_countries")
 def owner_wa_countries_cb(call):
     if call.from_user.id != MAIN_ADMIN_ID: return
-    bot.answer_callback_query(call.id, "🔄 جاري جلب الدول من الموقع...")
+    bot.answer_callback_query(call.id, "🔄 جاري الجلب...")
     countries = np_get_countries("WhatsApp")
     if not countries:
-        bot.answer_callback_query(call.id, "⚠️ لسه مفيش دول محفوظة", show_alert=True)
+        bot.answer_callback_query(call.id, "⚠️ لا توجد دول", show_alert=True)
         return
-    txt = f"📞 <b>دول واتساب المتاحة حالياً ({len(countries)})</b>\n\n"
+    txt = f"📞 <b>دول واتساب ({len(countries)})</b>\n\n"
     for item in countries[:30]:
         txt += f"• {item['name']} ({item.get('count', 0)})\n"
     markup = InlineKeyboardMarkup()
@@ -2055,7 +1950,7 @@ def owner_broadcast_users_cb(call):
 def owner_toggle_forcesub_cb(call):
     if call.from_user.id != MAIN_ADMIN_ID: return
     if not FORCE_SUB_CHANNEL_ID:
-        bot.answer_callback_query(call.id, "⚠️ لم يتم ضبط معرف القناة في الكود!", show_alert=True)
+        bot.answer_callback_query(call.id, "⚠️ لم يتم ضبط معرف القناة!", show_alert=True)
         return
     new_state = not is_force_sub_enabled()
     set_force_sub_enabled(new_state)
@@ -2245,11 +2140,13 @@ if __name__ == "__main__":
     load_available_cache()
     logger.info("🚀 بدء التشغيل...")
 
+    # ✅ الجروب: من my_otps (أكوادنا الخاصة)
     Thread(target=np_check_new_code_loop, daemon=True).start()
-    logger.info("✅ فحص الأكواد شغال (يقرأ من my_otps - كل 5 ثوان)")
+    logger.info("✅ فحص my_otps شغال (كل 5 ثوان) - الأكواد الخاصة")
 
+    # ✅ آخر 30 كود: من البث العام
     Thread(target=background_last_30_updater, daemon=True).start()
-    logger.info("⏰ محدّث آخر 30 كود شغال في الخلفية (كل 30 ثانية)")
+    logger.info("⏰ محدّث آخر 30 كود (من البث العام) شغال كل 30 ثانية")
 
     try:
         requests.get(f"https://api.telegram.org/bot{BOT_TOKEN}/deleteWebhook?drop_pending_updates=true", timeout=10)
@@ -2261,7 +2158,7 @@ if __name__ == "__main__":
             BotCommand("start", "بدء البوت"),
             BotCommand("owner", "لوحة المالك"),
             BotCommand("numberpanel", "لوحة الأرقام"),
-            BotCommand("debug", "اختبار الاتصال بالموقع"),
+            BotCommand("debug", "اختبار الاتصال"),
         ])
     except: pass
 
