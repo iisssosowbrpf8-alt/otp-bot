@@ -185,61 +185,11 @@ COUNTRIES_NAMES_AR = {
     "QA": "🇶🇦 قطر", "BH": "🇧🇭 البحرين", "OM": "🇴🇲 عمان",
     "YE": "🇾🇪 اليمن", "SD": "🇸🇩 السودان", "SY": "🇸🇾 سوريا",
     "PS": "🇵🇸 فلسطين", "UZ": "🇺🇿 أوزبكستان", "KZ": "🇰🇿 كازاخستان",
-    "AF": "🇦🇫 أفغانستان", "AL": "🇦🇱 ألبانيا", "AD": "🇦🇩 أندورا",
-    "AO": "🇦🇴 أنغولا", "AR": "🇦🇷 الأرجنتين", "AU": "🇦🇺 أستراليا",
-    "AT": "🇦🇹 النمسا", "BS": "🇧🇸 الباهاما", "BB": "🇧🇧 بربادوس",
-    "BY": "🇧🇾 بيلاروسيا", "BZ": "🇧🇿 بليز", "BJ": "🇧🇯 بنين",
-    "BT": "🇧🇹 بوتان", "BO": "🇧🇴 بوليفيا", "BA": "🇧🇦 البوسنة",
-    "BW": "🇧🇼 بوتسوانا", "BN": "🇧🇳 بروناي", "BG": "🇧🇬 بلغاريا",
-    "BI": "🇧🇮 بوروندي", "KH": "🇰🇭 كمبوديا", "CM": "🇨🇲 الكاميرون",
-    "CV": "🇨🇻 الرأس الأخضر", "CL": "🇨🇱 تشيلي", "CN": "🇨🇳 الصين",
-    "CO": "🇨🇴 كولومبيا", "KM": "🇰🇲 جزر القمر", "CG": "🇨🇬 الكونغو",
-    "CD": "🇨🇩 الكونغو الديمقراطية", "CR": "🇨🇷 كوستاريكا",
-    "HR": "🇭🇷 كرواتيا", "CU": "🇨🇺 كوبا", "CY": "🇨🇾 قبرص",
-    "DJ": "🇩🇯 جيبوتي", "DM": "🇩🇲 دومينيكا", "DO": "🇩🇴 الدومينيكان",
-    "EC": "🇪🇨 الإكوادور", "SV": "🇸🇻 السلفادور", "GQ": "🇬🇶 غينيا الاستوائية",
-    "ER": "🇪🇷 إريتريا", "EE": "🇪🇪 إستونيا", "ET": "🇪🇹 إثيوبيا",
-    "FJ": "🇫🇯 فيجي", "FI": "🇫🇮 فنلندا", "GA": "🇬🇦 الغابون",
-    "GM": "🇬🇲 غامبيا", "GT": "🇬🇹 غواتيمالا", "GN": "🇬🇳 غينيا",
-    "GW": "🇬🇼 غينيا بيساو", "GY": "🇬🇾 غيانا", "HN": "🇭🇳 هندوراس",
-    "HU": "🇭🇺 هنغاريا", "IS": "🇮🇸 آيسلندا", "IR": "🇮🇷 إيران",
-    "IL": "🇮🇱 إسرائيل", "JM": "🇯🇲 جامايكا", "JP": "🇯🇵 اليابان",
-    "KI": "🇰🇮 كيريباتي", "KP": "🇰🇵 كوريا الشمالية", "KR": "🇰🇷 كوريا الجنوبية",
-    "KG": "🇰🇬 قيرغيزستان", "LA": "🇱🇦 لاوس", "LV": "🇱🇻 لاتفيا",
-    "LS": "🇱🇸 ليسوتو", "LR": "🇱🇷 ليبيريا", "LI": "🇱🇮 ليختنشتاين",
-    "LT": "🇱🇹 ليتوانيا", "LU": "🇱🇺 لوكسمبورغ", "MO": "🇲🇴 ماكاو",
-    "MG": "🇲🇬 مدغشقر", "MW": "🇲🇼 مالاوي", "MV": "🇲🇻 المالديف",
-    "ML": "🇲🇱 مالي", "MT": "🇲🇹 مالطا", "MH": "🇲🇭 جزر مارشال",
-    "MR": "🇲🇷 موريتانيا", "MU": "🇲🇺 موريشيوس", "MX": "🇲🇽 المكسيك",
-    "FM": "🇫🇲 ميكرونيزيا", "MD": "🇲🇩 مولدوفا", "MC": "🇲🇨 موناكو",
-    "MN": "🇲🇳 منغوليا", "ME": "🇲🇪 الجبل الأسود", "MZ": "🇲🇿 موزمبيق",
-    "MM": "🇲🇲 ميانمار", "NA": "🇳🇦 ناميبيا", "NR": "🇳🇷 ناورو",
-    "NI": "🇳🇮 نيكاراغوا", "NE": "🇳🇪 النيجر", "PW": "🇵🇼 بالاو",
-    "PA": "🇵🇦 بنما", "PG": "🇵🇬 بابوا غينيا الجديدة", "PY": "🇵🇾 باراغواي",
-    "RW": "🇷🇼 رواندا", "KN": "🇰🇳 سانت كيتس", "LC": "🇱🇨 سانت لوسيا",
-    "VC": "🇻🇨 سانت فنسنت", "WS": "🇼🇸 ساموا", "SM": "🇸🇲 سان مارينو",
-    "ST": "🇸🇹 ساو تومي", "SN": "🇸🇳 السنغال", "RS": "🇷🇸 صربيا",
-    "SC": "🇸🇨 سيشل", "SL": "🇸🇱 سيراليون", "SK": "🇸🇰 سلوفاكيا",
-    "SI": "🇸🇮 سلوفينيا", "SB": "🇸🇧 جزر سليمان", "SO": "🇸🇴 الصومال",
-    "SS": "🇸🇸 جنوب السودان", "SR": "🇸🇷 سورينام", "SZ": "🇸🇿 إسواتيني",
-    "TJ": "🇹🇯 طاجيكستان", "TL": "🇹🇱 تيمور الشرقية", "TO": "🇹🇴 تونغا",
-    "TT": "🇹🇹 ترينيداد", "TM": "🇹🇲 تركمانستان", "TV": "🇹🇻 توفالو",
-    "UG": "🇺🇬 أوغندا", "UY": "🇺🇾 أوروغواي", "VU": "🇻🇺 فانواتو",
-    "VA": "🇻🇦 الفاتيكان", "VE": "🇻🇪 فنزويلا", "ZM": "🇿🇲 زامبيا",
-    "ZW": "🇿🇼 زيمبابوي",
+    "AF": "🇦🇫 أفغانستان",
 }
 
-DEFAULT_SERVICES = {
-    "whatsapp": "واتساب",
-    "facebook": "فيسبوك",
-    "telegram": "تليجرام",
-}
-
-SERVICE_API_MAP = {
-    "whatsapp": "WhatsApp",
-    "facebook": "Facebook",
-    "telegram": "Telegram",
-}
+DEFAULT_SERVICES = {"whatsapp": "واتساب", "facebook": "فيسبوك", "telegram": "تليجرام"}
+SERVICE_API_MAP = {"whatsapp": "WhatsApp", "facebook": "Facebook", "telegram": "Telegram"}
 
 SPECIAL_FLAGS = {
     "US": "🇺🇸", "RU": "🇷🇺", "EG": "🇪🇬", "SA": "🇸🇦", "DE": "🇩🇪",
@@ -255,64 +205,26 @@ SPECIAL_FLAGS = {
     "SK": "🇸🇰", "HU": "🇭🇺", "VN": "🇻🇳", "TH": "🇹🇭", "PH": "🇵🇭",
     "MY": "🇲🇾", "SG": "🇸🇬", "BD": "🇧🇩", "LK": "🇱🇰", "NP": "🇳🇵",
     "AM": "🇦🇲", "GE": "🇬🇪", "AZ": "🇦🇿", "AF": "🇦🇫",
-    "AL": "🇦🇱", "AO": "🇦🇴", "AR": "🇦🇷", "AU": "🇦🇺",
-    "BY": "🇧🇾", "BZ": "🇧🇿", "BJ": "🇧🇯", "BT": "🇧🇹",
-    "BO": "🇧🇴", "BA": "🇧🇦", "BW": "🇧🇼", "BN": "🇧🇳",
-    "BI": "🇧🇮", "KH": "🇰🇭", "CM": "🇨🇲", "CV": "🇨🇻", "CL": "🇨🇱",
-    "CN": "🇨🇳", "CO": "🇨🇴", "KM": "🇰🇲", "CG": "🇨🇬", "CD": "🇨🇩",
-    "CR": "🇨🇷", "CI": "🇨🇮", "HR": "🇭🇷", "CU": "🇨🇺", "CY": "🇨🇾",
-    "DJ": "🇩🇯", "DM": "🇩🇲", "DO": "🇩🇴", "EC": "🇪🇨", "SV": "🇸🇻",
-    "GQ": "🇬🇶", "ER": "🇪🇷", "EE": "🇪🇪", "ET": "🇪🇹", "FJ": "🇫🇯",
-    "GA": "🇬🇦", "GM": "🇬🇲", "GT": "🇬🇹", "GN": "🇬🇳",
-    "GW": "🇬🇼", "GY": "🇬🇾", "HN": "🇭🇳", "IS": "🇮🇸",
-    "IR": "🇮🇷", "IL": "🇮🇱", "JM": "🇯🇲", "JP": "🇯🇵", "KZ": "🇰🇿",
-    "KI": "🇰🇮", "KP": "🇰🇵", "KR": "🇰🇷", "KG": "🇰🇬", "LA": "🇱🇦",
-    "LV": "🇱🇻", "LS": "🇱🇸", "LR": "🇱🇷", "LI": "🇱🇮", "LT": "🇱🇹",
-    "LU": "🇱🇺", "MO": "🇲🇴", "MG": "🇲🇬", "MW": "🇲🇼", "MV": "🇲🇻",
-    "ML": "🇲🇱", "MT": "🇲🇹", "MH": "🇲🇭", "MR": "🇲🇷", "MU": "🇲🇺",
-    "MX": "🇲🇽", "FM": "🇫🇲", "MD": "🇲🇩", "MC": "🇲🇨", "MN": "🇲🇳",
-    "ME": "🇲🇪", "MZ": "🇲🇿", "MM": "🇲🇲", "NA": "🇳🇦", "NR": "🇳🇷",
-    "NI": "🇳🇮", "NE": "🇳🇪", "OM": "🇴🇲", "PW": "🇵🇼", "PS": "🇵🇸",
-    "PA": "🇵🇦", "PG": "🇵🇬", "PY": "🇵🇾", "QA": "🇶🇦", "RW": "🇷🇼",
-    "KN": "🇰🇳", "LC": "🇱🇨", "VC": "🇻🇨", "WS": "🇼🇸", "SM": "🇸🇲",
-    "ST": "🇸🇹", "SN": "🇸🇳", "RS": "🇷🇸", "SC": "🇸🇨", "SL": "🇸🇱",
-    "SI": "🇸🇮", "SB": "🇸🇧", "SO": "🇸🇴", "SS": "🇸🇸", "SD": "🇸🇩",
-    "SR": "🇸🇷", "SZ": "🇸🇿", "SY": "🇸🇾", "TJ": "🇹🇯", "TL": "🇹🇱",
-    "TO": "🇹🇴", "TT": "🇹🇹", "TM": "🇹🇲", "TV": "🇹🇻", "UG": "🇺🇬",
-    "UY": "🇺🇾", "UZ": "🇺🇿", "VU": "🇻🇺", "VA": "🇻🇦", "VE": "🇻🇪",
-    "YE": "🇾🇪", "ZM": "🇿🇲", "ZW": "🇿🇼",
 }
 
 def get_flag(country_code):
-    if not country_code:
-        return "🌍"
-    code = str(country_code).upper()
-    return SPECIAL_FLAGS.get(code, "🌍")
-
-def get_country_name(country_code):
-    if country_code in COUNTRIES_NAMES_AR:
-        return COUNTRIES_NAMES_AR[country_code]
-    return f"{get_flag(country_code)} {country_code}"
+    if not country_code: return "🌍"
+    return SPECIAL_FLAGS.get(str(country_code).upper(), "🌍")
 
 def detect_country_from_number(number, user_id=None):
     try:
         s = str(number).strip()
-        if not s:
-            return "Unknown", "🌍", "UN"
-        if not s.startswith('+'):
-            s = '+' + s
+        if not s: return "Unknown", "🌍", "UN"
+        if not s.startswith('+'): s = '+' + s
         try:
             parsed = phonenumbers.parse(s)
             if not phonenumbers.is_valid_number(parsed):
                 parsed = phonenumbers.parse(s + "00000000")
         except:
-            try:
-                parsed = phonenumbers.parse(s + "00000000")
-            except:
-                return "Unknown", "🌍", "UN"
+            try: parsed = phonenumbers.parse(s + "00000000")
+            except: return "Unknown", "🌍", "UN"
         region = phonenumbers.region_code_for_number(parsed)
-        if not region:
-            return "Unknown", "🌍", "UN"
+        if not region: return "Unknown", "🌍", "UN"
         country_name = geocoder.description_for_number(parsed, "ar")
         if not country_name or country_name == "Unknown":
             country_name = geocoder.description_for_number(parsed, "en")
@@ -323,11 +235,9 @@ def detect_country_from_number(number, user_id=None):
         return "Unknown", "🌍", "UN"
 
 def get_country_flags_final(country_name):
-    if not country_name:
-        return "🌍"
+    if not country_name: return "🌍"
     for code, flag in SPECIAL_FLAGS.items():
-        if country_name.upper() == code:
-            return flag
+        if country_name.upper() == code: return flag
     return "🌍"
 
 def format_country_button(country_input):
@@ -337,15 +247,11 @@ def format_country_button(country_input):
     else:
         try:
             country_obj = pycountry.countries.get(name=country_input)
-            if country_obj:
-                code = country_obj.alpha_2
+            if country_obj: code = country_obj.alpha_2
             else:
                 results = pycountry.countries.search_fuzzy(country_input)
-                if results:
-                    code = results[0].alpha_2
-        except:
-            pass
-    
+                if results: code = results[0].alpha_2
+        except: pass
     if code and code in COUNTRIES_NAMES_AR:
         return COUNTRIES_NAMES_AR[code]
     return f"🌍 {country_input}"
@@ -416,7 +322,6 @@ def get_number_owner(number):
     cleaned = re.sub(r'\D', '', str(number))
     return owners.get(cleaned)
 
-# ملفات النظام
 COUNTRIES_FILE = "countriesi.json"
 CHANNELS_FILE = "channelsi.json"
 USERS_FILE = "usersiy.json"
@@ -440,16 +345,11 @@ REFERRALS = {}
 NUMBERS_ADMINS = []
 
 DEFAULT_REFERRAL_SETTINGS = {
-    "codes_required_for_referral": 10,
-    "referral_bonus": 0.05,
-    "code_bonus": 0.002,
-    "min_withdrawal": 5.0,
-    "enabled": True
+    "codes_required_for_referral": 10, "referral_bonus": 0.05,
+    "code_bonus": 0.002, "min_withdrawal": 5.0, "enabled": True
 }
 
-DEFAULT_OTP_BUTTONS = [
-    {"name": "🔗 جروب البوت", "url": GROUP_LINK},
-]
+DEFAULT_OTP_BUTTONS = [{"name": "🔗 جروب البوت", "url": GROUP_LINK}]
 
 import telebot
 from telebot.types import (
@@ -474,26 +374,19 @@ def save_otp_buttons(buttons):
 OTP_BUTTONS = load_otp_buttons()
 
 STATISTICS = {
-    "total_codes": 0, "codes_today": 0, "codes_this_week": 0, "codes_this_month": 0,
-    "last_reset_day": None, "last_reset_week": None, "last_reset_month": None,
-    "daily_history": {}, "recent_activations": []
+    "total_codes": 0, "codes_today": 0, "recent_activations": []
 }
 
 user_states = {}
 broadcast_state = {}
 
-LAST_30_CODES_CACHE = {
-    "data": [],
-    "last_update": 0,
-    "lock": Lock()
-}
+LAST_30_CODES_CACHE = {"data": [], "last_update": 0, "lock": Lock()}
 
 def is_force_sub_enabled():
     if os.path.exists(FORCE_SUB_ENABLED_FILE):
         try:
             with open(FORCE_SUB_ENABLED_FILE, "r", encoding="utf-8") as f:
-                data = json.load(f)
-                return data.get("enabled", False)
+                return json.load(f).get("enabled", False)
         except: pass
     return False
 
@@ -526,9 +419,6 @@ def is_admin(user_id):
 def is_banned(user_id):
     return user_id in BANNED
 
-# ═══════════════════════════════════════════════════════════════
-# 🔌 API
-# ═══════════════════════════════════════════════════════════════
 NUMBERPANEL_BASE = f"{NUMBERPANEL_API_URL.rstrip('/')}/api"
 HEADERS = {
     "Authorization": f"Bearer {NUMBERPANEL_API_TOKEN}",
@@ -536,13 +426,58 @@ HEADERS = {
     "Accept": "application/json"
 }
 
+# ═══════════════════════════════════════════════════════════════
+# ✨✨✨ دالة الديباج - تطبع شكل الرد من /api/my_otps
+# ═══════════════════════════════════════════════════════════════
+def debug_my_otps_response():
+    """تطبع شكل الرد الحقيقي من /api/my_otps في ملف"""
+    url = f"{NUMBERPANEL_BASE}/my_otps"
+    lines = []
+    lines.append("="*70)
+    lines.append(f"API: {url}")
+    lines.append(f"Time: {datetime.now().isoformat()}")
+    lines.append("="*70)
+    try:
+        r = requests.get(url, params={"limit": 20}, headers=HEADERS, timeout=15)
+        lines.append(f"STATUS CODE: {r.status_code}")
+        lines.append(f"RESPONSE TEXT:")
+        lines.append(r.text)
+        lines.append("")
+        # نحاول نعمل parse ونعرض الشكل
+        try:
+            data = r.json()
+            lines.append("PARSED JSON TYPE: " + type(data).__name__)
+            if isinstance(data, dict):
+                lines.append(f"TOP-LEVEL KEYS: {list(data.keys())}")
+                for k, v in data.items():
+                    lines.append(f"  - {k}: type={type(v).__name__}, value={str(v)[:300]}")
+            elif isinstance(data, list):
+                lines.append(f"LIST LENGTH: {len(data)}")
+                if data:
+                    lines.append(f"FIRST ITEM TYPE: {type(data[0]).__name__}")
+                    lines.append(f"FIRST ITEM: {str(data[0])[:500]}")
+        except Exception as e:
+            lines.append(f"JSON PARSE ERROR: {e}")
+    except Exception as e:
+        lines.append(f"REQUEST ERROR: {e}")
+    lines.append("="*70)
+    
+    content = "\n".join(lines)
+    with open("my_otps_debug.txt", "w", encoding="utf-8") as f:
+        f.write(content)
+    print(content)
+    logger.info("📄 تم حفظ شكل الرد في my_otps_debug.txt")
+
+# ═══════════════════════════════════════════════════════════════
+# API Functions
+# ═══════════════════════════════════════════════════════════════
 def np_get_countries(service_name="WhatsApp"):
     try:
         r = requests.get(f"{NUMBERPANEL_BASE}/countries", params={"service": service_name}, headers=HEADERS, timeout=15)
         if r.status_code == 200:
             return r.json().get("countries", [])
     except Exception as e:
-        logger.error(f"❌ خطأ اتصال: {e}")
+        logger.error(f"❌ خطأ: {e}")
     return []
 
 def np_request_number(service_name, country_name_en):
@@ -554,10 +489,8 @@ def np_request_number(service_name, country_name_en):
             data = r.json()
             if data.get("success") is True and data.get("number"):
                 return True, data.get("number")
-            else:
-                return False, data.get("message", "فشل الطلب")
-        else:
-            return False, f"HTTP {r.status_code}: {r.text[:100]}"
+            return False, data.get("message", "فشل")
+        return False, f"HTTP {r.status_code}: {r.text[:100]}"
     except Exception as e:
         return False, str(e)
 
@@ -577,57 +510,76 @@ def save_np_last_code(data):
                 json.dump(data, f, indent=2, ensure_ascii=False)
         except: pass
 
-# ✅ دالة 1: الأكواد الخاصة بحسابنا (للجروب)
+# ✨ دالة مرنة جداً - تتعامل مع كل أشكال الرد
 def np_get_latest_codes():
-    """قراءة من /api/my_otps - سجل أكوادنا الخاصة"""
+    """قراءة من /api/my_otps - تتعامل مع أي شكل رد"""
     url = f"{NUMBERPANEL_BASE}/my_otps"
     try:
         r = requests.get(url, params={"limit": 50}, headers=HEADERS, timeout=15)
-        if r.status_code == 200:
-            data = r.json()
-            otps_list = None
-            if isinstance(data, dict):
-                for key in ("otps", "data", "items", "results"):
-                    if key in data and isinstance(data[key], list):
-                        otps_list = data[key]
-                        break
-            elif isinstance(data, list):
-                otps_list = data
-            
-            if otps_list:
-                result = []
-                for item in otps_list:
-                    if isinstance(item, list) and len(item) >= 3:
-                        result.append(item)
-                    elif isinstance(item, dict):
-                        service = item.get("service") or item.get("app") or "WhatsApp"
-                        number = item.get("number") or item.get("phone") or ""
-                        code = item.get("otp") or item.get("code") or item.get("otp_code") or ""
-                        if number and code:
-                            result.append([service, number, code, ""])
-                if result:
-                    logger.info(f"✅ my_otps: {len(result)} كود خاص")
-                    return result
+        if r.status_code != 200:
+            logger.error(f"❌ my_otps HTTP {r.status_code}")
             return []
+        
+        data = r.json()
+        otps_list = None
+        
+        # ندور على القائمة في أي مكان
+        if isinstance(data, dict):
+            for key in ("otps", "data", "items", "results", "messages", "history", "list"):
+                if key in data and isinstance(data[key], list):
+                    otps_list = data[key]
+                    break
+            # لو مش لاقيها، ناخد أي قيمة list في الرد
+            if otps_list is None:
+                for v in data.values():
+                    if isinstance(v, list):
+                        otps_list = v
+                        break
+        elif isinstance(data, list):
+            otps_list = data
+        
+        if not otps_list:
+            return []
+        
+        result = []
+        for item in otps_list:
+            try:
+                if isinstance(item, list) and len(item) >= 3:
+                    # شكل: [service, number, code, ...]
+                    result.append([str(item[0]), str(item[1]), str(item[2]), ""])
+                elif isinstance(item, dict):
+                    # شكل: {"service": ..., "number": ..., "code": ...}
+                    service = (item.get("service") or item.get("app") or 
+                              item.get("type") or item.get("name") or "WhatsApp")
+                    number = (item.get("number") or item.get("phone") or 
+                             item.get("phone_number") or item.get("to") or "")
+                    code = (item.get("otp") or item.get("code") or 
+                           item.get("otp_code") or item.get("message") or 
+                           item.get("text") or item.get("body") or "")
+                    if number and code:
+                        result.append([str(service), str(number), str(code), ""])
+            except: continue
+        
+        if result:
+            logger.info(f"✅ my_otps: {len(result)} كود")
+        return result
     except Exception as e:
         logger.error(f"❌ خطأ my_otps: {e}")
     return []
 
-# ✅ دالة 2: البث العام (لكل المستخدمين - لزر آخر 30 كود)
 def np_get_public_codes():
-    """قراءة من /api/otp - البث العام لكل المستخدمين"""
+    """البث العام لكل المستخدمين"""
     url = f"{NUMBERPANEL_BASE}/otp?count=200"
     try:
         r = requests.get(url, headers=HEADERS, timeout=15)
         if r.status_code != 200:
-            logger.error(f"❌ API error public: {r.status_code}")
             return []
         data = r.json()
         if isinstance(data, list):
             return data
         return []
     except Exception as e:
-        logger.error(f"❌ خطأ الاتصال بالبث العام: {e}")
+        logger.error(f"❌ خطأ البث العام: {e}")
         return []
 
 def find_number_for_country(country_name_en, service_key, user_id):
@@ -641,10 +593,8 @@ def find_number_for_country(country_name_en, service_key, user_id):
         cleaned = clean_number(result)
         if cleaned and cleaned not in user_numbers:
             return True, cleaned, "تم الطلب بنجاح"
-        else:
-            return False, None, "الرقم مستخدم قبل كده، جرب مرة أخرى"
-    else:
-        return False, None, result
+        return False, None, "الرقم مستخدم قبل كده"
+    return False, None, result
 
 # ═══════════════════════════════════════════════════════════════
 # 💰 نظام الإحالات والرصيد
@@ -674,8 +624,7 @@ def load_referrals():
 def save_referrals(data=None):
     global REFERRALS
     with REFERRALS_LOCK:
-        if data:
-            REFERRALS = data
+        if data: REFERRALS = data
         with open(REFERRALS_FILE, "w", encoding="utf-8") as f:
             json.dump(REFERRALS, f, indent=2, ensure_ascii=False)
 
@@ -703,8 +652,7 @@ def process_referral(user_id, referrer_id):
             "codes_received": 0, "balance": 0.0, "total_earned": 0.0
         }
     else:
-        if REFERRALS[user_key].get("referred_by"):
-            return False
+        if REFERRALS[user_key].get("referred_by"): return False
         REFERRALS[user_key]["referred_by"] = referrer_key
     if referrer_key not in REFERRALS:
         REFERRALS[referrer_key] = {
@@ -784,8 +732,7 @@ def save_my_numbers_sent(data):
 def add_my_number(number, label="", added_by=None):
     numbers = load_my_numbers()
     cleaned = re.sub(r'\D', '', str(number))
-    if not cleaned:
-        return False, "❌ رقم غير صالح"
+    if not cleaned: return False, "❌ رقم غير صالح"
     if any(n.get("number") == cleaned for n in numbers):
         return False, "⚠️ موجود"
     country_name, flag, region = detect_country_from_number(cleaned)
@@ -803,8 +750,7 @@ def remove_my_number(number):
     numbers = load_my_numbers()
     cleaned = re.sub(r'\D', '', str(number))
     new_numbers = [n for n in numbers if n.get("number") != cleaned]
-    if len(new_numbers) == len(numbers):
-        return False
+    if len(new_numbers) == len(numbers): return False
     save_my_numbers(new_numbers)
     return True
 
@@ -837,7 +783,7 @@ def save_collected_codes():
             json.dump(collected_codes, f, indent=2, ensure_ascii=False)
 
 # ═══════════════════════════════════════════════════════════════
-# 🔄 تحميل وحفظ البيانات
+# 🔄 تحميل وحفظ
 # ═══════════════════════════════════════════════════════════════
 def load_data():
     global COUNTRIES, CHANNELS, USERS, ADMINS, BANNED, OTP_GROUP, GROUPS, REFERRALS, NUMBERS_ADMINS
@@ -911,7 +857,7 @@ def load_statistics():
         except: pass
 
 # ═══════════════════════════════════════════════════════════════
-# 🔥 رسالة الجروب (كود فقط - نظيفة)
+# 🔥 رسالة الجروب (كود فقط)
 # ═══════════════════════════════════════════════════════════════
 def build_group_code_message(number, code_val, service, country, message=""):
     cleaned = clean_number(number)
@@ -952,9 +898,9 @@ def build_group_code_message(number, code_val, service, country, message=""):
 
     return text, markup
 
-# ✅ فحص أكوادنا الخاصة (my_otps) وإرسالها للجروب
+# ✅ فحص أكوادنا الخاصة من my_otps
 def np_check_new_code_loop():
-    logger.info("🚀 بدء فحص my_otps (كل 5 ثوان)...")
+    logger.info("🚀 بدء فحص my_otps (كل 3 ثوان)...")
     time.sleep(3)
     while True:
         try:
@@ -1034,57 +980,51 @@ def np_check_new_code_loop():
                     save_statistics()
         except Exception as e:
             logger.error(f"خطأ: {e}")
-        time.sleep(5)
+        time.sleep(3)
 
-# ✅ آخر 30 كود من البث العام (كل المستخدمين)
+# ✅ آخر 30 كود من البث العام
 def fetch_last_30_from_site():
-    """جلب آخر 30 كود من البث العام للموقع (كل المستخدمين)"""
     try:
         codes = np_get_public_codes()
-        if not codes:
-            return []
+        if not codes: return []
         return codes[:30]
     except Exception as e:
-        logger.error(f"خطأ جلب آخر 30 كود: {e}")
+        logger.error(f"خطأ: {e}")
         return []
 
 def get_last_30_codes_cached(force_refresh=False):
     with LAST_30_CODES_CACHE["lock"]:
         now = time.time()
         if force_refresh or (now - LAST_30_CODES_CACHE["last_update"] > 30) or not LAST_30_CODES_CACHE["data"]:
-            logger.info("🔄 تحديث آخر 30 كود من البث العام...")
             fresh = fetch_last_30_from_site()
             if fresh:
                 LAST_30_CODES_CACHE["data"] = fresh
                 LAST_30_CODES_CACHE["last_update"] = now
-                logger.info(f"✅ تم التحديث: {len(fresh)} كود")
         return LAST_30_CODES_CACHE["data"]
 
 def background_last_30_updater():
-    logger.info("⏰ بدء المحدث التلقائي لآخر 30 كود (كل 30 ثانية)...")
+    logger.info("⏰ محدّث آخر 30 كود (كل 30 ثانية)...")
     time.sleep(5)
     while True:
         try:
             get_last_30_codes_cached(force_refresh=True)
         except Exception as e:
-            logger.error(f"خطأ التحديث: {e}")
+            logger.error(f"خطأ: {e}")
         time.sleep(30)
 
 def analyze_last_30_codes():
     codes = get_last_30_codes_cached()
     if not codes:
-        return "📊 <b>آخر 30 كود من الموقع</b>\n\n⚠️ لا توجد أكواد حالياً.", None
+        return "📊 <b>آخر 30 كود</b>\n\n⚠️ لا توجد أكواد حالياً.", None
 
     country_stats = {}
     total = 0
     for item in codes:
         if not isinstance(item, list) or len(item) < 2:
             continue
-        number = str(item[1])
-        cleaned = clean_number(number)
-        if not cleaned:
-            continue
-        country_name, flag, region = detect_country_from_number(cleaned)
+        cleaned = clean_number(str(item[1]))
+        if not cleaned: continue
+        _, flag, region = detect_country_from_number(cleaned)
         key = region if region and region != "UN" else "UN"
         if key not in country_stats:
             country_stats[key] = {"flag": flag, "count": 0}
@@ -1095,33 +1035,21 @@ def analyze_last_30_codes():
         return "📊 <b>آخر 30 كود</b>\n\n⚠️ لم يتم التعرف على الدول.", None
 
     sorted_stats = sorted(country_stats.items(), key=lambda x: x[1]["count"], reverse=True)
-
     text = (
         f"📊 <b>آخر {total} كود من الموقع</b>\n"
         f"<i>(من كل المستخدمين)</i>\n"
         f"━━━━━━━━━━━━━━━━━━━━━\n\n"
-        f"🌍 <b>ترتيب الدول حسب عدد الأكواد:</b>\n\n"
     )
-
     for idx, (code, data) in enumerate(sorted_stats, 1):
         flag = data["flag"]
         count = data["count"]
         pct = (count / total * 100)
-        country_name_ar = COUNTRIES_NAMES_AR.get(code, code)
-        clean_name = country_name_ar.replace(flag, "").strip()
-        medal = ""
-        if idx == 1: medal = "🥇 "
-        elif idx == 2: medal = "🥈 "
-        elif idx == 3: medal = "🥉 "
+        clean_name = COUNTRIES_NAMES_AR.get(code, code).replace(flag, "").strip()
+        medal = "🥇 " if idx == 1 else "🥈 " if idx == 2 else "🥉 " if idx == 3 else ""
         bar = "█" * min(int(pct / 5), 20)
-        text += f"{medal}{idx}. {flag} {clean_name}\n"
-        text += f"      <b>{count}</b> ({pct:.0f}%) {bar}\n"
+        text += f"{medal}{idx}. {flag} {clean_name}\n      <b>{count}</b> ({pct:.0f}%) {bar}\n"
 
-    text += f"\n━━━━━━━━━━━━━━━━━━━━━\n"
-    text += f"📈 <b>الإجمالي:</b> {total} كود\n"
-    text += f"🌍 <b>عدد الدول:</b> {len(sorted_stats)}\n\n"
-    text += f"⏰ <b>آخر تحديث:</b> {datetime.now().strftime('%H:%M:%S')}"
-
+    text += f"\n━━━━━━━━━━━━━━━━━━━━━\n📈 <b>الإجمالي:</b> {total}\n⏰ <b>آخر تحديث:</b> {datetime.now().strftime('%H:%M:%S')}"
     return text, sorted_stats
 
 # رسالة نجاح طلب الرقم
@@ -1141,8 +1069,6 @@ def build_number_success_message(service_key, country_name_en, number):
     )
 
     markup = InlineKeyboardMarkup(row_width=1)
-
-    # 1 - نسخ الرقم
     try:
         markup.add(InlineKeyboardButton(
             text="📋 نسخ الرقم",
@@ -1152,16 +1078,9 @@ def build_number_success_message(service_key, country_name_en, number):
     except:
         markup.add(InlineKeyboardButton("📋 نسخ الرقم", callback_data=f"copy_num_{cleaned}", style="success"))
 
-    # 2 - طلب رقم جديد
     markup.add(InlineKeyboardButton("📲 طلب رقم جديد", callback_data=f"new_number_{service_key}", style="success"))
-
-    # 3 - جروب البوت
     markup.add(InlineKeyboardButton("🔗 جروب البوت", url=GROUP_LINK, style="success"))
-
-    # 4 - رجوع للدول
     markup.add(InlineKeyboardButton("🌍 رجوع للدول", callback_data=f"service_{service_key}", style="success"))
-
-    # 5 - اختر خدمة أخرى
     markup.add(InlineKeyboardButton("🔄 اختر خدمة أخرى", callback_data="back_to_services", style="primary"))
 
     return text, markup
@@ -1281,19 +1200,16 @@ def get_admin_menu_with_numberpanel():
 # 🔒 الاشتراك الإجباري
 # ═══════════════════════════════════════════════════════════════
 def check_force_sub(user_id):
-    if not is_force_sub_enabled():
-        return True
-    if not FORCE_SUB_CHANNEL_ID:
-        return True
-    if user_id == MAIN_ADMIN_ID:
-        return True
+    if not is_force_sub_enabled(): return True
+    if not FORCE_SUB_CHANNEL_ID: return True
+    if user_id == MAIN_ADMIN_ID: return True
     try:
         member = bot.get_chat_member(FORCE_SUB_CHANNEL_ID, user_id)
         if member.status in ["creator", "administrator", "member"]:
             return True
         return False
     except Exception as e:
-        logger.error(f"خطأ التحقق من الاشتراك: {e}")
+        logger.error(f"خطأ التحقق: {e}")
         return True
 
 def send_force_sub_message(chat_id):
@@ -1318,11 +1234,9 @@ def start(msg):
     if is_banned(user_id):
         bot.reply_to(msg, "🚫 أنت محظور")
         return
-
     if not check_force_sub(user_id):
         send_force_sub_message(msg.chat.id)
         return
-
     if len(msg.text.split()) > 1:
         param = msg.text.split()[1]
         if param.startswith("ref_"):
@@ -1358,14 +1272,13 @@ def debug_cmd(msg):
     bot.reply_to(msg, "⏳ جاري اختبار الاتصال...")
     my_otps = np_get_latest_codes()
     public_otps = np_get_public_codes()
-    for svc_key, svc_api in SERVICE_API_MAP.items():
-        countries = np_get_countries(svc_api)
-        logger.info(f"🌍 {svc_api}: {len(countries)} دولة")
+    # نطبع الشكل الحقيقي في ملف
+    debug_my_otps_response()
     txt = (
         f"✅ نتائج الاختبار:\n\n"
         f"📥 الأكواد الخاصة (my_otps): {len(my_otps)}\n"
         f"🌐 الأكواد العامة (otp): {len(public_otps)}\n\n"
-        f"راجع اللوجز للتفاصيل"
+        f"📄 تم حفظ شكل الرد في ملف my_otps_debug.txt"
     )
     bot.send_message(msg.chat.id, txt, parse_mode="HTML")
 
@@ -1400,8 +1313,7 @@ def handle_messages(msg):
         added = []
         for c in candidates:
             cleaned = re.sub(r'\D', '', c)
-            if not cleaned or len(cleaned) < 8:
-                continue
+            if not cleaned or len(cleaned) < 8: continue
             ok, result = add_my_number(cleaned, added_by=user_id)
             if ok: added.append(result)
         del user_states[user_id]
@@ -1419,12 +1331,10 @@ def handle_messages(msg):
         try:
             new_admin = int(msg.text.strip())
             if new_admin not in ADMINS:
-                ADMINS.append(new_admin)
-                save_admins()
+                ADMINS.append(new_admin); save_admins()
             bot.reply_to(msg, f"✅ <code>{new_admin}</code>", parse_mode="HTML")
             del user_states[user_id]
-        except:
-            bot.reply_to(msg, "❌ ID غير صالح")
+        except: bot.reply_to(msg, "❌ ID غير صالح")
         return
 
     if user_states.get(user_id, {}).get("action") == "owner_remove_admin":
@@ -1432,12 +1342,10 @@ def handle_messages(msg):
         try:
             rem = int(msg.text.strip())
             if rem in ADMINS and rem != MAIN_ADMIN_ID:
-                ADMINS.remove(rem)
-                save_admins()
+                ADMINS.remove(rem); save_admins()
                 bot.reply_to(msg, f"✅ تم حذف <code>{rem}</code>", parse_mode="HTML")
             del user_states[user_id]
-        except:
-            bot.reply_to(msg, "❌ ID غير صالح")
+        except: bot.reply_to(msg, "❌ ID غير صالح")
         return
 
     if user_states.get(user_id, {}).get("action") == "owner_ban_user":
@@ -1445,12 +1353,10 @@ def handle_messages(msg):
         try:
             ban_id = int(msg.text.strip())
             if ban_id not in BANNED:
-                BANNED.append(ban_id)
-                save_banned()
+                BANNED.append(ban_id); save_banned()
             bot.reply_to(msg, f"🚫 <code>{ban_id}</code>", parse_mode="HTML")
             del user_states[user_id]
-        except:
-            bot.reply_to(msg, "❌ ID غير صالح")
+        except: bot.reply_to(msg, "❌ ID غير صالح")
         return
 
     if user_states.get(user_id, {}).get("action") == "owner_unban_user":
@@ -1458,12 +1364,10 @@ def handle_messages(msg):
         try:
             ub = int(msg.text.strip())
             if ub in BANNED:
-                BANNED.remove(ub)
-                save_banned()
+                BANNED.remove(ub); save_banned()
             bot.reply_to(msg, f"✅ <code>{ub}</code>", parse_mode="HTML")
             del user_states[user_id]
-        except:
-            bot.reply_to(msg, "❌ ID غير صالح")
+        except: bot.reply_to(msg, "❌ ID غير صالح")
         return
 
     if user_states.get(user_id, {}).get("action") == "owner_broadcast":
@@ -1473,8 +1377,7 @@ def handle_messages(msg):
         prog = bot.send_message(msg.chat.id, "⏳...")
         for uid in list(USERS.keys()):
             try:
-                bot.send_message(int(uid), btext, parse_mode="HTML")
-                s += 1
+                bot.send_message(int(uid), btext, parse_mode="HTML"); s += 1
             except: f += 1
         try: bot.delete_message(prog.chat.id, prog.message_id)
         except: pass
@@ -1489,19 +1392,16 @@ def handle_messages(msg):
         prog = bot.send_message(msg.chat.id, "⏳ جاري الإرسال...")
         for uid in list(USERS.keys()):
             try:
-                bot.send_message(int(uid), btext, parse_mode="HTML")
-                s += 1
+                bot.send_message(int(uid), btext, parse_mode="HTML"); s += 1
             except: f += 1
         g_s, g_f = 0, 0
         for gid in list(GROUPS):
             try:
-                bot.send_message(gid, btext, parse_mode="HTML")
-                g_s += 1
+                bot.send_message(gid, btext, parse_mode="HTML"); g_s += 1
             except: g_f += 1
         if OTP_GROUP:
             try:
-                bot.send_message(OTP_GROUP, btext, parse_mode="HTML")
-                g_s += 1
+                bot.send_message(OTP_GROUP, btext, parse_mode="HTML"); g_s += 1
             except: g_f += 1
         try: bot.delete_message(prog.chat.id, prog.message_id)
         except: pass
@@ -1536,11 +1436,8 @@ def handle_messages(msg):
         if not check_force_sub(user_id):
             send_force_sub_message(msg.chat.id)
             return
-        bot.send_message(
-            msg.chat.id,
-            "🎯 <b>اختر الخدمة:</b>",
-            parse_mode="HTML", reply_markup=get_services_menu()
-        )
+        bot.send_message(msg.chat.id, "🎯 <b>اختر الخدمة:</b>",
+                         parse_mode="HTML", reply_markup=get_services_menu())
         return
 
     if msg.text == "💰 الرصيد":
@@ -1548,9 +1445,7 @@ def handle_messages(msg):
         bal = rd.get("balance", 0.0)
         rc = len(rd.get("referrals", []))
         mw = load_referral_settings().get("min_withdrawal", 5.0)
-        bot.send_message(msg.chat.id,
-            f"💰 <b>رصيدك</b>\n\n💵 {bal:.3f} $\n👥 {rc}\n📉 {mw}$",
-            parse_mode="HTML")
+        bot.send_message(msg.chat.id, f"💰 <b>رصيدك</b>\n\n💵 {bal:.3f} $\n👥 {rc}\n📉 {mw}$", parse_mode="HTML")
         return
 
     if msg.text == "💸 سحب":
@@ -1569,9 +1464,7 @@ def handle_messages(msg):
         rc = len(get_user_referral_data(user_id).get("referrals", []))
         markup = InlineKeyboardMarkup()
         markup.add(InlineKeyboardButton("📤 مشاركة", url=f"https://t.me/share/url?url={link}", style="success"))
-        bot.send_message(msg.chat.id,
-            f"👥 <b>الإحالات</b>\n\n🔗 <code>{link}</code>\n\n👥 {rc}",
-            parse_mode="HTML", reply_markup=markup)
+        bot.send_message(msg.chat.id, f"👥 <b>الإحالات</b>\n\n🔗 <code>{link}</code>\n\n👥 {rc}", parse_mode="HTML", reply_markup=markup)
         return
 
     if msg.text == "📊 حالتي":
@@ -1617,13 +1510,13 @@ def back_to_services_cb(call):
     bot.answer_callback_query(call.id, "✅")
 
 # ═══════════════════════════════════════════════════════════════
-# ✅ التحقق من الاشتراك
+# ✅ الاشتراك
 # ═══════════════════════════════════════════════════════════════
 @bot.callback_query_handler(func=lambda call: call.data == "check_sub_now")
 def check_sub_now_cb(call):
     user_id = call.from_user.id
     if check_force_sub(user_id):
-        bot.answer_callback_query(call.id, "✅ تم التحقق! يمكنك استخدام البوت الآن.", show_alert=True)
+        bot.answer_callback_query(call.id, "✅ تم التحقق!", show_alert=True)
         try: bot.delete_message(call.message.chat.id, call.message.message_id)
         except: pass
         bot.send_message(call.message.chat.id, "⚡ أرسل /start للبدء", parse_mode="HTML")
@@ -1631,7 +1524,7 @@ def check_sub_now_cb(call):
         bot.answer_callback_query(call.id, "❌ لم تشترك بعد!", show_alert=True)
 
 # ═══════════════════════════════════════════════════════════════
-# 🔥 اختيار خدمة (جلب الدول من الموقع)
+# 🔥 اختيار خدمة
 # ═══════════════════════════════════════════════════════════════
 @bot.callback_query_handler(func=lambda call: call.data.startswith("service_"))
 def service_selected(call):
@@ -1681,7 +1574,7 @@ def service_selected(call):
     bot.edit_message_text(text, call.message.chat.id, call.message.message_id, parse_mode="HTML", reply_markup=markup)
 
 # ═══════════════════════════════════════════════════════════════
-# 🔥 اختيار دولة وطلب الرقم
+# 🔥 اختيار دولة
 # ═══════════════════════════════════════════════════════════════
 @bot.callback_query_handler(func=lambda call: call.data.startswith("pick_country_"))
 def pick_country_cb(call):
@@ -1700,7 +1593,7 @@ def pick_country_cb(call):
 
     try:
         bot.edit_message_text(
-            f"{service_icon} <b>جاري طلب رقم {service_name} من {display_name}...</b>\n\n📡 بنطلب من الموقع...",
+            f"{service_icon} <b>جاري طلب رقم {service_name} من {display_name}...</b>\n\n📡 بنطلب...",
             call.message.chat.id, call.message.message_id, parse_mode="HTML"
         )
     except: pass
@@ -1744,7 +1637,7 @@ def copy_num_cb(call):
     bot.answer_callback_query(call.id, f"📋 +{num}", show_alert=True)
 
 # ═══════════════════════════════════════════════════════════════
-# 📊 آخر 30 كود من البث العام
+# 📊 آخر 30 كود
 # ═══════════════════════════════════════════════════════════════
 @bot.callback_query_handler(func=lambda call: call.data == "show_last_30_codes")
 def show_last_30_codes_cb(call):
@@ -1752,24 +1645,21 @@ def show_last_30_codes_cb(call):
     if is_banned(user_id):
         bot.answer_callback_query(call.id, "🚫", show_alert=True)
         return
-
     bot.answer_callback_query(call.id, "📊 جاري التحليل...")
-
     try:
         text, _ = analyze_last_30_codes()
         markup = InlineKeyboardMarkup(row_width=2)
         markup.add(InlineKeyboardButton("🔄 تحديث", callback_data="refresh_last_30", style="success"))
         markup.add(InlineKeyboardButton("🔙 رجوع", callback_data="back_to_services", style="primary"))
         markup.add(InlineKeyboardButton("🔗 جروب البوت", url=GROUP_LINK, style="success"))
-
         try:
             bot.edit_message_text(text, call.message.chat.id, call.message.message_id,
                                   parse_mode="HTML", reply_markup=markup)
         except:
             bot.send_message(call.message.chat.id, text, parse_mode="HTML", reply_markup=markup)
     except Exception as e:
-        logger.error(f"خطأ عرض آخر 30 كود: {e}")
-        bot.answer_callback_query(call.id, f"⚠️ خطأ: {e}", show_alert=True)
+        logger.error(f"خطأ عرض: {e}")
+        bot.answer_callback_query(call.id, f"⚠️ {e}", show_alert=True)
 
 @bot.callback_query_handler(func=lambda call: call.data == "refresh_last_30")
 def refresh_last_30_cb(call):
@@ -1777,7 +1667,6 @@ def refresh_last_30_cb(call):
     if is_banned(user_id):
         bot.answer_callback_query(call.id, "🚫", show_alert=True)
         return
-
     bot.answer_callback_query(call.id, "🔄 جاري التحديث...")
     try:
         get_last_30_codes_cached(force_refresh=True)
@@ -1786,7 +1675,6 @@ def refresh_last_30_cb(call):
         markup.add(InlineKeyboardButton("🔄 تحديث", callback_data="refresh_last_30", style="success"))
         markup.add(InlineKeyboardButton("🔙 رجوع", callback_data="back_to_services", style="primary"))
         markup.add(InlineKeyboardButton("🔗 جروب البوت", url=GROUP_LINK, style="success"))
-
         try:
             bot.edit_message_text(text, call.message.chat.id, call.message.message_id,
                                   parse_mode="HTML", reply_markup=markup)
@@ -1794,10 +1682,10 @@ def refresh_last_30_cb(call):
             bot.send_message(call.message.chat.id, text, parse_mode="HTML", reply_markup=markup)
     except Exception as e:
         logger.error(f"خطأ تحديث: {e}")
-        bot.answer_callback_query(call.id, f"⚠️ خطأ: {e}", show_alert=True)
+        bot.answer_callback_query(call.id, f"⚠️ {e}", show_alert=True)
 
 # ═══════════════════════════════════════════════════════════════
-# 🔥 معلومات الرقم (للمالك)
+# 🔥 معلومات الرقم
 # ═══════════════════════════════════════════════════════════════
 @bot.callback_query_handler(func=lambda call: call.data.startswith("code_info_"))
 def code_info_callback(call):
@@ -1828,7 +1716,6 @@ def code_info_callback(call):
 
     user_data = USERS.get(str(owner_id), {})
     referral_data = load_referrals().get(str(owner_id), {})
-
     mention_link = f'<a href="tg://user?id={owner_id}">{owner_name}</a>'
 
     text = (
@@ -1842,21 +1729,17 @@ def code_info_callback(call):
         f"🆔 <code>{owner_id}</code>\n"
         f"📛 @{owner_username if owner_username else 'لا يوجد'}\n"
         f"📅 الانضمام: {user_data.get('join_date', '—')}\n"
-        f"📨 أكواده: {user_data.get('activations', 0)}\n"
-        f"💰 رصيده: {referral_data.get('balance', 0.0):.3f} $\n\n"
-        f"━━━━━━━━━━━━━━━━━━━━━\n"
-        f"📨 أكواد هذا الرقم: {len(sent_codes)}\n"
-        f"🔑 آخر كود: <code>{last_code}</code>"
+        f"💰 رصيده: {referral_data.get('balance', 0.0):.3f} $"
     )
 
     try:
         bot.send_message(user_id, text, parse_mode="HTML")
         bot.answer_callback_query(call.id, "✅ في الخاص")
     except Exception as e:
-        bot.answer_callback_query(call.id, f"⚠️ فشل: {e}", show_alert=True)
+        bot.answer_callback_query(call.id, f"⚠️ {e}", show_alert=True)
 
 # ═══════════════════════════════════════════════════════════════
-# 🎯 Owner Panel Callbacks
+# 🎯 Owner Panel
 # ═══════════════════════════════════════════════════════════════
 @bot.callback_query_handler(func=lambda call: call.data == "owner_panel")
 def owner_panel_cb(call):
@@ -1878,13 +1761,11 @@ def owner_known_countries_cb(call):
     if call.from_user.id != MAIN_ADMIN_ID: return
     known = load_known_countries()
     if not known:
-        bot.answer_callback_query(call.id, "⚠️ لم يتم اكتشاف دول", show_alert=True)
+        bot.answer_callback_query(call.id, "⚠️ لا توجد دول", show_alert=True)
         return
     txt = f"🌍 <b>الدول المكتشفة ({len(known)})</b>\n\n"
     for code, data in sorted(known.items()):
-        flag = get_flag(code)
-        name = COUNTRIES_NAMES_AR.get(code, code)
-        txt += f"{flag} <code>{code}</code> — {name}\n"
+        txt += f"{get_flag(code)} <code>{code}</code>\n"
     markup = InlineKeyboardMarkup()
     markup.add(InlineKeyboardButton("🔙 رجوع", callback_data="owner_panel", style="success"))
     bot.send_message(call.message.chat.id, txt, parse_mode="HTML", reply_markup=markup)
@@ -1955,7 +1836,7 @@ def owner_toggle_forcesub_cb(call):
     new_state = not is_force_sub_enabled()
     set_force_sub_enabled(new_state)
     status = "✅ مفعّل" if new_state else "❌ معطّل"
-    bot.answer_callback_query(call.id, f"تم! الاشتراك الآن: {status}", show_alert=True)
+    bot.answer_callback_query(call.id, f"تم! {status}", show_alert=True)
     try:
         bot.edit_message_text(get_owner_panel_text(), call.message.chat.id,
                               call.message.message_id, parse_mode="HTML",
@@ -1999,7 +1880,7 @@ def owner_full_stats_cb(call):
     bot.send_message(call.message.chat.id, txt, parse_mode="HTML")
 
 # ═══════════════════════════════════════════════════════════════
-# 🎯 Admin Panel Callbacks
+# 🎯 Admin Panel
 # ═══════════════════════════════════════════════════════════════
 @bot.callback_query_handler(func=lambda call: call.data == "admin_panel")
 def admin_panel_cb(call):
@@ -2022,8 +1903,7 @@ def back_to_main_cb(call):
 def admin_stats_cb(call):
     if not is_admin(call.from_user.id): return
     txt = (f"📊 <b>الإحصائيات</b>\n\n👥 {len(USERS)}\n"
-           f"📨 {STATISTICS.get('total_codes', 0)}\n"
-           f"📅 {STATISTICS.get('codes_today', 0)}")
+           f"📨 {STATISTICS.get('total_codes', 0)}")
     bot.send_message(call.message.chat.id, txt, parse_mode="HTML")
 
 @bot.callback_query_handler(func=lambda call: call.data == "admin_broadcast_menu")
@@ -2033,7 +1913,7 @@ def admin_broadcast_menu_cb(call):
     bot.send_message(call.message.chat.id, "📣 أرسل الرسالة:")
 
 # ═══════════════════════════════════════════════════════════════
-# 🎯 NumberPanel Callbacks
+# 🎯 NumberPanel
 # ═══════════════════════════════════════════════════════════════
 @bot.callback_query_handler(func=lambda call: call.data == "numberpanel")
 def numberpanel_cb(call):
@@ -2076,27 +1956,12 @@ def np_add_number_cb(call):
 @bot.callback_query_handler(func=lambda call: call.data == "np_last_codes")
 def np_last_codes_cb(call):
     if not is_numbers_admin(call.from_user.id) and not is_admin(call.from_user.id): return
-    sent_data = load_my_numbers_sent()
-    if not sent_data:
-        all_codes = []
-        for c in collected_codes[-20:]:
-            all_codes.append(c)
-        if not all_codes:
-            bot.answer_callback_query(call.id, "⚠️ لا توجد أكواد", show_alert=True)
-            return
-        text = f"📥 <b>آخر {len(all_codes)} كود</b>\n\n"
-        for c in reversed(all_codes):
-            text += f"📱 <code>+{c.get('number', '')}</code> 🔑 <code>{c.get('otp', '—')}</code>\n"
-    else:
-        all_codes = []
-        for num, codes in sent_data.items():
-            for c in codes[-10:]:
-                all_codes.append((num, c))
-        all_codes.sort(key=lambda x: x[1].get("timestamp", ""), reverse=True)
-        all_codes = all_codes[:20]
-        text = f"📥 <b>آخر {len(all_codes)} كود</b>\n\n"
-        for num, c in all_codes:
-            text += f"📱 <code>+{num}</code> 🔑 <code>{c.get('code', '—')}</code>\n"
+    if not collected_codes:
+        bot.answer_callback_query(call.id, "⚠️ لا توجد أكواد", show_alert=True)
+        return
+    text = f"📥 <b>آخر {min(len(collected_codes), 20)} كود</b>\n\n"
+    for c in reversed(collected_codes[-20:]):
+        text += f"📱 <code>+{c.get('number', '')}</code> 🔑 <code>{c.get('otp', '—')}</code>\n"
     markup = InlineKeyboardMarkup()
     markup.add(InlineKeyboardButton("🔙", callback_data="numberpanel", style="success"))
     bot.edit_message_text(text, call.message.chat.id, call.message.message_id,
@@ -2140,13 +2005,17 @@ if __name__ == "__main__":
     load_available_cache()
     logger.info("🚀 بدء التشغيل...")
 
-    # ✅ الجروب: من my_otps (أكوادنا الخاصة)
-    Thread(target=np_check_new_code_loop, daemon=True).start()
-    logger.info("✅ فحص my_otps شغال (كل 5 ثوان) - الأكواد الخاصة")
+    # ✅ اختبار شكل الرد من my_otps أول ما يشتغل
+    logger.info("🔍 اختبار my_otps...")
+    debug_my_otps_response()
 
-    # ✅ آخر 30 كود: من البث العام
+    # ✅ الأكواد الخاصة للجروب (my_otps)
+    Thread(target=np_check_new_code_loop, daemon=True).start()
+    logger.info("✅ فحص my_otps شغال (كل 3 ثوان)")
+
+    # ✅ آخر 30 كود (بث عام)
     Thread(target=background_last_30_updater, daemon=True).start()
-    logger.info("⏰ محدّث آخر 30 كود (من البث العام) شغال كل 30 ثانية")
+    logger.info("⏰ محدّث آخر 30 كود شغال (كل 30 ثانية)")
 
     try:
         requests.get(f"https://api.telegram.org/bot{BOT_TOKEN}/deleteWebhook?drop_pending_updates=true", timeout=10)
