@@ -45,6 +45,9 @@ if not BOT_TOKEN:
 if MAIN_ADMIN_ID == 0:
     raise ValueError("MAIN_ADMIN_ID غير موجود!")
 
+# ═══════════════════════════════════════════════════════════════
+# 📝 Logging
+# ═══════════════════════════════════════════════════════════════
 os.makedirs("logs", exist_ok=True)
 logging.basicConfig(
     level=logging.INFO,
@@ -445,98 +448,87 @@ def save_np_last_code(data):
         except: pass
 
 # ═══════════════════════════════════════════════════════════════
-# ✨✨✨ دالة مرنة لقراءة my_otps (تتعامل مع أي شكل)
+# ✅ قراءة من my_otps (للاحتياط - البث القديم للأكواد)
 # ═══════════════════════════════════════════════════════════════
 def np_get_latest_codes():
-    """قراءة مرنة جداً من /api/my_otps - تتعامل مع أي شكل رد"""
+    """قراءة مرنة من /api/my_otps"""
     url = f"{NUMBERPANEL_BASE}/my_otps"
     try:
         r = requests.get(url, params={"limit": 50}, headers=HEADERS, timeout=15)
         if r.status_code != 200:
-            logger.error(f"❌ my_otps HTTP {r.status_code}: {r.text[:200]}")
             return []
-        
-        # نطبع الرد الخام في اللوج عشان نشوفه
-        logger.info(f"📥 my_otps raw: {r.text[:600]}")
-        
         data = r.json()
         otps_list = None
-        
         if isinstance(data, dict):
             for key in ("otps", "data", "items", "results", "messages",
                         "history", "list", "records", "codes"):
                 if key in data and isinstance(data[key], list):
                     otps_list = data[key]
-                    logger.info(f"✅ القائمة موجودة في المفتاح: {key}")
                     break
             if otps_list is None:
                 for k, v in data.items():
                     if isinstance(v, list):
                         otps_list = v
-                        logger.info(f"✅ لقيت list في المفتاح: {k}")
                         break
         elif isinstance(data, list):
             otps_list = data
-            logger.info(f"✅ الرد list مباشرة، عناصره: {len(data)}")
-        
         if not otps_list:
-            logger.warning(f"⚠️ مفيش قائمة: {str(data)[:300]}")
             return []
-        
         result = []
         for item in otps_list:
             try:
                 if isinstance(item, list) and len(item) >= 3:
-                    svc = str(item[0])
-                    num = str(item[1])
-                    code = str(item[2])
-                    if num and code:
-                        result.append([svc, num, code, ""])
-                        logger.info(f"✅ list item: {svc} | {num} | {code}")
-                
+                    result.append([str(item[0]), str(item[1]), str(item[2]), ""])
                 elif isinstance(item, dict):
-                    logger.info(f"📋 item keys: {list(item.keys())}")
-                    
                     num = ""
                     for k in ("number", "phone", "phone_number", "to", "msisdn", "recipient"):
                         if k in item and item[k]:
-                            num = str(item[k])
-                            break
-                    
+                            num = str(item[k]); break
                     code = ""
-                    for k in ("otp", "code", "otp_code", "verification_code",
-                             "message", "text", "body", "content", "sms"):
+                    for k in ("otp", "code", "otp_code", "verification_code", "message", "text", "body"):
                         if k in item and item[k]:
                             val = str(item[k])
                             digits = re.findall(r'\d+', val)
                             if digits:
                                 code = max(digits, key=len)
                             break
-                    
                     svc = "WhatsApp"
-                    for k in ("service", "app", "type", "name", "site", "provider"):
+                    for k in ("service", "app", "type", "name", "site"):
                         if k in item and item[k]:
-                            svc = str(item[k])
-                            break
-                    
+                            svc = str(item[k]); break
                     if num and code:
                         result.append([svc, num, code, ""])
-                        logger.info(f"✅ dict item: {svc} | {num} | {code}")
-                    else:
-                        logger.warning(f"⚠️ dict ناقص: num={num}, code={code}")
-            except Exception as e:
-                logger.error(f"خطأ في عنصر: {e}")
-                continue
-        
-        if result:
-            logger.info(f"✅✅ إجمالي: {len(result)} كود")
+            except: continue
         return result
-    except Exception as e:
-        logger.error(f"❌ خطأ my_otps: {e}")
+    except: pass
     return []
 
+# ═══════════════════════════════════════════════════════════════
+# ✨✨✨ الحل النهائي: جلب آخر OTP لرقم معين مباشرة
+# ═══════════════════════════════════════════════════════════════
+def np_get_latest_otp_for_number(number):
+    """جلب آخر OTP لرقم معين من /api/latest_otp"""
+    cleaned = clean_number(number)
+    if not cleaned:
+        return None
+    url = f"{NUMBERPANEL_BASE}/latest_otp"
+    try:
+        r = requests.get(url, params={"number": cleaned}, headers=HEADERS, timeout=8)
+        if r.status_code != 200:
+            return None
+        data = r.json()
+        if isinstance(data, dict) and data.get("success") and data.get("has_otp"):
+            otp = data.get("otp_code")
+            if otp:
+                return str(otp)
+    except Exception as e:
+        logger.debug(f"latest_otp للرقم {cleaned}: {e}")
+    return None
+
+# ═══════════════════════════════════════════════════════════════
+# ✅ البث العام للأكواد (لزر آخر 30 كود)
+# ═══════════════════════════════════════════════════════════════
 def np_get_public_codes():
-    """البث العام لكل المستخدمين"""
     url = f"{NUMBERPANEL_BASE}/otp?count=200"
     try:
         r = requests.get(url, headers=HEADERS, timeout=15)
@@ -544,9 +536,7 @@ def np_get_public_codes():
         data = r.json()
         if isinstance(data, list): return data
         return []
-    except Exception as e:
-        logger.error(f"❌ خطأ البث العام: {e}")
-        return []
+    except: return []
 
 def find_number_for_country(country_name_en, service_key, user_id):
     service_name = SERVICE_API_MAP.get(service_key.lower(), service_key.capitalize())
@@ -817,7 +807,7 @@ def load_statistics():
         except: pass
 
 # ═══════════════════════════════════════════════════════════════
-# 🔥 رسالة الجروب (كود فقط)
+# 🔥 رسالة الجروب (كود فقط - نظيفة)
 # ═══════════════════════════════════════════════════════════════
 def build_group_code_message(number, code_val, service, country, message=""):
     cleaned = clean_number(number)
@@ -858,10 +848,124 @@ def build_group_code_message(number, code_val, service, country, message=""):
 
     return text, markup
 
-# ✅ فحص أكوادنا الخاصة من my_otps (كل 3 ثواني)
+# ═══════════════════════════════════════════════════════════════
+# 🎯 الدالة الأساسية: فحص كل الأرقام مباشرة من /api/latest_otp
+# ═══════════════════════════════════════════════════════════════
+def np_check_my_numbers_loop():
+    """
+    كل 3 ثواني، تسأل الموقع عن آخر OTP لكل رقم عندنا
+    الحل النهائي المضمون 100%
+    """
+    logger.info("🎯 فحص الأرقام الخاصة مباشرة (كل 3 ثوان)...")
+    time.sleep(5)
+    while True:
+        try:
+            numbers_list = load_my_numbers()
+            if not numbers_list:
+                time.sleep(3)
+                continue
+
+            # ناخد نسخة من آخر الأكواد المرسلة
+            last_sent = load_np_last_code()
+            new_sent_count = 0
+
+            for entry in numbers_list:
+                try:
+                    number = entry.get("number", "")
+                    if not number:
+                        continue
+
+                    # نسأل الموقع عن آخر كود للرقم ده
+                    otp = np_get_latest_otp_for_number(number)
+                    if not otp:
+                        continue
+
+                    unique_key = f"{clean_number(number)}|{otp}"
+                    if unique_key in last_sent:
+                        continue
+
+                    # نحدد الخدمة
+                    label = entry.get("label", "")
+                    service_key = "whatsapp"
+                    if "facebook" in label.lower() or "فيسبوك" in label:
+                        service_key = "facebook"
+                    elif "telegram" in label.lower() or "تليجرام" in label:
+                        service_key = "telegram"
+
+                    service_api_name = SERVICE_API_MAP.get(service_key, "WhatsApp")
+                    country_name, flag, region = detect_country_from_number(number)
+
+                    logger.info(f"🎯 كود جديد: {otp} للرقم {number} - {region}")
+
+                    text, markup = build_group_code_message(
+                        number=number, code_val=otp,
+                        service=service_api_name, country=region, message=""
+                    )
+
+                    sent = False
+                    if OTP_GROUP:
+                        try:
+                            msg = bot.send_message(OTP_GROUP, text, parse_mode="HTML", reply_markup=markup)
+                            auto_delete_message(OTP_GROUP, msg.message_id, delay=300)
+                            sent = True
+                            logger.info(f"✅ تم إرسال الكود للجروب")
+                        except Exception as e:
+                            logger.error(f"خطأ إرسال: {e}")
+
+                    for gid in list(GROUPS):
+                        if gid != OTP_GROUP:
+                            try:
+                                msg = bot.send_message(gid, text, parse_mode="HTML", reply_markup=markup)
+                                auto_delete_message(gid, msg.message_id, delay=300)
+                                sent = True
+                            except: pass
+
+                    if sent:
+                        last_sent[unique_key] = datetime.now().isoformat()
+                        new_sent_count += 1
+                        update_my_number_last_code(number, otp)
+
+                        with collected_codes_lock:
+                            collected_codes.append({
+                                "number": clean_number(number), "sms": "",
+                                "service": service_api_name, "otp": otp,
+                                "site": "NumberPanel-Direct", "timestamp": time.time()
+                            })
+                            if len(collected_codes) > 1000:
+                                collected_codes[:] = collected_codes[-1000:]
+                            save_collected_codes()
+
+                        owner = get_number_owner(clean_number(number))
+                        if owner:
+                            add_code_bonus(owner.get("user_id"))
+
+                        STATISTICS["total_codes"] = STATISTICS.get("total_codes", 0) + 1
+
+                    # تأخير بسيط بين كل رقم (لتقليل الحمل)
+                    time.sleep(0.2)
+
+                except Exception as e:
+                    logger.debug(f"خطأ فحص رقم: {e}")
+                    continue
+
+            # نحفظ last_sent مرة واحدة بعد اللفة
+            if new_sent_count > 0:
+                if len(last_sent) > 5000:
+                    keys = list(last_sent.keys())[-5000:]
+                    last_sent = {k: last_sent[k] for k in keys}
+                save_np_last_code(last_sent)
+                save_statistics()
+
+        except Exception as e:
+            logger.error(f"خطأ في np_check_my_numbers_loop: {e}")
+        time.sleep(3)
+
+# ═══════════════════════════════════════════════════════════════
+# ✅ فحص الأكواد من my_otps (احتياطي)
+# ═══════════════════════════════════════════════════════════════
 def np_check_new_code_loop():
-    logger.info("🚀 بدء فحص my_otps (كل 3 ثوان)...")
-    time.sleep(3)
+    logger.info("🚀 بدء فحص my_otps (احتياطي - كل 5 ثوان)...")
+    time.sleep(5)
     while True:
         try:
             codes_list = np_get_latest_codes()
@@ -889,7 +993,7 @@ def np_check_new_code_loop():
                 if unique_key in last_sent:
                     continue
 
-                logger.info(f"🔔 كود جديد: {code_val} للرقم {cleaned_number} - {country}")
+                logger.info(f"🔔 كود من my_otps: {code_val} للرقم {cleaned_number}")
 
                 text, markup = build_group_code_message(
                     number=cleaned_number, code_val=code_val,
@@ -902,7 +1006,6 @@ def np_check_new_code_loop():
                         msg = bot.send_message(OTP_GROUP, text, parse_mode="HTML", reply_markup=markup)
                         auto_delete_message(OTP_GROUP, msg.message_id, delay=300)
                         sent = True
-                        logger.info(f"✅ تم إرسال الكود للجروب")
                     except Exception as e:
                         logger.error(f"خطأ إرسال: {e}")
 
@@ -916,33 +1019,18 @@ def np_check_new_code_loop():
 
                 if sent:
                     last_sent[unique_key] = datetime.now().isoformat()
-                    if len(last_sent) > 2000:
-                        for k in list(last_sent.keys())[:-2000]:
+                    if len(last_sent) > 5000:
+                        for k in list(last_sent.keys())[:-5000]:
                             del last_sent[k]
                     save_np_last_code(last_sent)
                     update_my_number_last_code(cleaned_number, code_val)
-
-                    with collected_codes_lock:
-                        collected_codes.append({
-                            "number": cleaned_number, "sms": "",
-                            "service": service, "otp": code_val,
-                            "site": "NumberPanel-Direct", "timestamp": time.time()
-                        })
-                        if len(collected_codes) > 1000:
-                            collected_codes[:] = collected_codes[-1000:]
-                        save_collected_codes()
-
-                    owner = get_number_owner(cleaned_number)
-                    if owner:
-                        add_code_bonus(owner.get("user_id"))
-
-                    STATISTICS["total_codes"] = STATISTICS.get("total_codes", 0) + 1
-                    save_statistics()
         except Exception as e:
             logger.error(f"خطأ: {e}")
-        time.sleep(3)
+        time.sleep(5)
 
+# ═══════════════════════════════════════════════════════════════
 # ✅ آخر 30 كود من البث العام
+# ═══════════════════════════════════════════════════════════════
 def fetch_last_30_from_site():
     try:
         codes = np_get_public_codes()
@@ -1155,6 +1243,9 @@ def get_admin_menu_with_numberpanel():
     markup.add(InlineKeyboardButton("🔙 رجوع", callback_data="back_to_main", style="success"))
     return markup
 
+# ═══════════════════════════════════════════════════════════════
+# 🔒 الاشتراك الإجباري
+# ═══════════════════════════════════════════════════════════════
 def check_force_sub(user_id):
     if not is_force_sub_enabled(): return True
     if not FORCE_SUB_CHANNEL_ID: return True
@@ -1228,11 +1319,16 @@ def debug_cmd(msg):
     bot.reply_to(msg, "⏳ جاري اختبار الاتصال...")
     my_otps = np_get_latest_codes()
     public_otps = np_get_public_codes()
+    numbers = load_my_numbers()
+    test_number = numbers[0].get("number") if numbers else None
+    test_otp = np_get_latest_otp_for_number(test_number) if test_number else None
     txt = (
         f"✅ نتائج الاختبار:\n\n"
-        f"📥 الأكواد الخاصة (my_otps): {len(my_otps)}\n"
-        f"🌐 الأكواد العامة (otp): {len(public_otps)}\n\n"
-        f"📄 راجع اللوجز لشكل الرد"
+        f"📥 my_otps: {len(my_otps)} كود\n"
+        f"🌐 البث العام: {len(public_otps)} كود\n"
+        f"📱 عدد أرقامك: {len(numbers)}\n"
+        f"🧪 اختبار latest_otp لأول رقم ({test_number}): {test_otp or 'لا يوجد'}\n\n"
+        f"📄 راجع اللوجز للتفاصيل"
     )
     bot.send_message(msg.chat.id, txt, parse_mode="HTML")
 
@@ -1959,9 +2055,15 @@ if __name__ == "__main__":
     load_available_cache()
     logger.info("🚀 بدء التشغيل...")
 
-    Thread(target=np_check_new_code_loop, daemon=True).start()
-    logger.info("✅ فحص my_otps شغال (كل 3 ثوان)")
+    # ✅✨✨ الحل النهائي: فحص كل الأرقام مباشرة من /api/latest_otp
+    Thread(target=np_check_my_numbers_loop, daemon=True).start()
+    logger.info("🎯 فحص الأرقام الخاصة مباشرة شغال (كل 3 ثوان) ✅")
 
+    # ✅ احتياطي: فحص my_otps
+    Thread(target=np_check_new_code_loop, daemon=True).start()
+    logger.info("✅ فحص my_otps شغال (احتياطي - كل 5 ثوان)")
+
+    # ✅ آخر 30 كود من البث العام
     Thread(target=background_last_30_updater, daemon=True).start()
     logger.info("⏰ محدّث آخر 30 كود شغال (كل 30 ثانية)")
 
