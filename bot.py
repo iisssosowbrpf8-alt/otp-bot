@@ -257,8 +257,18 @@ COUNTRIES_NAMES_AR = {
     "VE": "🇻🇪 فنزويلا", "ZM": "🇿🇲 زامبيا", "ZW": "🇿🇼 زيمبابوي",
 }
 
+# ✨ التعديل 1: إضافة فيسبوك وتليجرام للخدمات
 DEFAULT_SERVICES = {
     "whatsapp": "واتساب",
+    "facebook": "فيسبوك",
+    "telegram": "تليجرام",
+}
+
+# ✨ مابينج أسماء الخدمات للإرسال للموقع
+SERVICE_API_MAP = {
+    "whatsapp": "WhatsApp",
+    "facebook": "Facebook",
+    "telegram": "Telegram",
 }
 
 def load_known_countries():
@@ -645,10 +655,10 @@ def np_get_latest_codes():
         logger.error(f"❌ خطأ في الاتصال: {e}")
         return []
 
+# ✨ التعديل 4: mapping الخدمات (فيسبوك وتليجرام)
 def find_number_for_country(country_name_en, service_key, user_id):
     """طلب رقم من الموقع مباشرة باستخدام اسم الدولة الإنجليزي"""
-    service_map = {"whatsapp": "WhatsApp"}
-    service_name = service_map.get(service_key.lower(), service_key.capitalize())
+    service_name = SERVICE_API_MAP.get(service_key.lower(), service_key.capitalize())
     user_numbers = set()
     for n in load_my_numbers():
         if n.get("added_by") == user_id:
@@ -1089,9 +1099,12 @@ def get_main_reply_keyboard(user_id=None):
             markup.row(KeyboardButton("📱 لوحة الأرقام"))
     return markup
 
+# ✨ التعديل 2: إضافة زرين فيسبوك وتليجرام للقائمة
 def get_services_menu():
     markup = InlineKeyboardMarkup(row_width=1)
     markup.add(InlineKeyboardButton("📞 واتساب", callback_data="service_whatsapp", style="success"))
+    markup.add(InlineKeyboardButton("📘 فيسبوك", callback_data="service_facebook", style="success"))
+    markup.add(InlineKeyboardButton("✈️ تليجرام", callback_data="service_telegram", style="success"))
     return markup
 
 def get_owner_panel_text():
@@ -1240,16 +1253,10 @@ def start(msg):
 def debug_cmd(msg):
     if msg.from_user.id != MAIN_ADMIN_ID: return
     bot.reply_to(msg, "⏳ جاري اختبار الاتصال بـ NumberPanel...")
-    countries = np_get_countries("WhatsApp")
-    txt = f"🌍 عدد دول الواتساب المتاحة: {len(countries)}\n"
-    if countries:
-        txt += f"أمثلة: {countries[:5]}\n\n"
-        test_country = countries[0]["name"]
-        success, result = np_request_number("WhatsApp", test_country)
-        txt += f"📡 اختبار طلب رقم من {test_country}:\nالنتيجة: {success}\nالرد: {result}"
-    else:
-        txt += "❌ لا توجد دول متاحة لاختبار الطلب."
-    bot.send_message(msg.chat.id, txt, parse_mode="HTML")
+    for svc_key, svc_api in SERVICE_API_MAP.items():
+        countries = np_get_countries(svc_api)
+        logger.info(f"🌍 {svc_api}: {len(countries)} دولة")
+    bot.send_message(msg.chat.id, "✅ تم الاختبار، راجع السجلات (logs) لمشاهدة النتائج لكل خدمة.", parse_mode="HTML")
 
 @bot.message_handler(commands=["numberpanel"])
 def numberpanel_cmd(msg):
@@ -1461,6 +1468,8 @@ def service_selected(call):
     service_key = call.data.replace("service_", "")
     service_name = DEFAULT_SERVICES.get(service_key, service_key)
     service_icon = get_service_icon(service_key)
+    # ✨ التعديل 3: استخدام اسم الخدمة الصح حسب ما اختار المستخدم
+    service_api_name = SERVICE_API_MAP.get(service_key, service_key.capitalize())
 
     bot.answer_callback_query(call.id, "🔄 جاري جلب الدول المتاحة من الموقع...")
     bot.edit_message_text(
@@ -1468,15 +1477,15 @@ def service_selected(call):
         call.message.chat.id, call.message.message_id, parse_mode="HTML"
     )
 
-    countries = np_get_countries("WhatsApp")
+    countries = np_get_countries(service_api_name)
 
     if not countries:
         markup = InlineKeyboardMarkup(row_width=1)
         markup.add(InlineKeyboardButton("🔄 حاول تاني", callback_data=f"service_{service_key}", style="success"))
         markup.add(InlineKeyboardButton("🔗 جروب البوت", url=GROUP_LINK, style="success"))
         bot.edit_message_text(
-            "❌ <b>لا توجد دول متاحة حالياً لواتساب.</b>\n\n"
-            "💡 قد يكون الرصيد غير كافٍ أو السيرفر مشغول.",
+            f"❌ <b>لا توجد دول متاحة حالياً لـ {service_name}.</b>\n\n"
+            f"💡 قد يكون الرصيد غير كافٍ أو السيرفر مشغول.",
             call.message.chat.id, call.message.message_id, parse_mode="HTML", reply_markup=markup
         )
         return
