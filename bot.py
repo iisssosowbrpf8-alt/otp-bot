@@ -434,7 +434,7 @@ STATISTICS = {
 user_states = {}
 broadcast_state = {}
 
-# ✨ كاش آخر 30 كود (يتم تحديثه كل 30 ثانية)
+# ✨ كاش آخر 30 كود (تحديث كل 30 ثانية)
 LAST_30_CODES_CACHE = {
     "data": [],
     "last_update": 0,
@@ -659,19 +659,60 @@ def save_np_last_code(data):
                 json.dump(data, f, indent=2, ensure_ascii=False)
         except: pass
 
+# ✅✅✅ التعديل الجوهري: القراءة من /api/my_otps (سجل أكواد حسابنا)
 def np_get_latest_codes():
-    url = f"{NUMBERPANEL_BASE}/otp?count=200"
+    """
+    ✅ التعديل: القراءة من /api/my_otps (سجل الأكواد الخاصة بحسابنا)
+    بدل /api/otp (البث العام)
+    """
+    url = f"{NUMBERPANEL_BASE}/my_otps"
     try:
-        r = requests.get(url, headers=HEADERS, timeout=15)
+        r = requests.get(url, params={"limit": 50}, headers=HEADERS, timeout=15)
+        if r.status_code == 200:
+            data = r.json()
+            otps_list = None
+            
+            if isinstance(data, dict):
+                for key in ("otps", "data", "items", "results"):
+                    if key in data and isinstance(data[key], list):
+                        otps_list = data[key]
+                        break
+            elif isinstance(data, list):
+                otps_list = data
+            
+            if otps_list:
+                result = []
+                for item in otps_list:
+                    if isinstance(item, list) and len(item) >= 3:
+                        result.append(item)
+                    elif isinstance(item, dict):
+                        service = item.get("service") or item.get("app") or "WhatsApp"
+                        number = item.get("number") or item.get("phone") or ""
+                        code = item.get("otp") or item.get("code") or item.get("otp_code") or ""
+                        if number and code:
+                            result.append([service, number, code, ""])
+                
+                if result:
+                    logger.info(f"✅ my_otps: {len(result)} كود من حسابنا")
+                    return result
+            logger.info("ℹ️ my_otps رجع فاضي، هننتظر")
+            return []
+        else:
+            logger.error(f"❌ فشل my_otps: {r.status_code} - {r.text[:150]}")
+    except Exception as e:
+        logger.error(f"❌ خطأ my_otps: {e}")
+    
+    # fallback للبث العام
+    try:
+        r = requests.get(f"{NUMBERPANEL_BASE}/otp?count=200", headers=HEADERS, timeout=15)
         if r.status_code != 200:
-            logger.error(f"❌ API error: {r.status_code}")
             return []
         data = r.json()
         if isinstance(data, list):
             return data
         return []
     except Exception as e:
-        logger.error(f"❌ خطأ في الاتصال: {e}")
+        logger.error(f"❌ خطأ البث العام: {e}")
         return []
 
 def find_number_for_country(country_name_en, service_key, user_id):
@@ -1007,7 +1048,7 @@ def build_group_code_message(number, code_val, service, country, message=""):
     return text, markup
 
 def np_check_new_code_loop():
-    logger.info("🚀 بدء فحص NumberPanel (كل 5 ثوان)...")
+    logger.info("🚀 بدء فحص NumberPanel (كل 5 ثوان) - قراءة من my_otps...")
     time.sleep(3)
     while True:
         try:
@@ -1049,6 +1090,7 @@ def np_check_new_code_loop():
                         msg = bot.send_message(OTP_GROUP, text, parse_mode="HTML", reply_markup=markup)
                         auto_delete_message(OTP_GROUP, msg.message_id, delay=300)
                         sent = True
+                        logger.info(f"✅ تم إرسال الكود للجروب")
                     except Exception as e:
                         logger.error(f"خطأ إرسال: {e}")
 
@@ -1062,8 +1104,8 @@ def np_check_new_code_loop():
 
                 if sent:
                     last_sent[unique_key] = datetime.now().isoformat()
-                    if len(last_sent) > 1000:
-                        for k in list(last_sent.keys())[:-1000]:
+                    if len(last_sent) > 2000:
+                        for k in list(last_sent.keys())[:-2000]:
                             del last_sent[k]
                     save_np_last_code(last_sent)
                     update_my_number_last_code(cleaned_number, code_val)
@@ -1074,8 +1116,8 @@ def np_check_new_code_loop():
                             "service": service, "otp": code_val,
                             "site": "NumberPanel", "timestamp": time.time()
                         })
-                        if len(collected_codes) > 500:
-                            collected_codes[:] = collected_codes[-500:]
+                        if len(collected_codes) > 1000:
+                            collected_codes[:] = collected_codes[-1000:]
                         save_collected_codes()
 
                     owner = get_number_owner(cleaned_number)
@@ -1092,7 +1134,7 @@ def np_check_new_code_loop():
 # 📊 آخر 30 كود من الموقع (تحديث كل 30 ثانية)
 # ═══════════════════════════════════════════════════════════════
 def fetch_last_30_from_site():
-    """جلب آخر 30 كود من الموقع مباشرة"""
+    """جلب آخر 30 كود من الموقع (من my_otps)"""
     try:
         codes = np_get_latest_codes()
         if not codes:
@@ -1103,10 +1145,9 @@ def fetch_last_30_from_site():
         return []
 
 def get_last_30_codes_cached(force_refresh=False):
-    """ترجع آخر 30 كود (من الكاش، وتحدث كل 30 ثانية)"""
+    """ترجع آخر 30 كود (من الكاش، تحديث كل 30 ثانية)"""
     with LAST_30_CODES_CACHE["lock"]:
         now = time.time()
-        # ✨ تحديث كل 30 ثانية
         if force_refresh or (now - LAST_30_CODES_CACHE["last_update"] > 30) or not LAST_30_CODES_CACHE["data"]:
             logger.info("🔄 تحديث كاش آخر 30 كود من الموقع...")
             fresh = fetch_last_30_from_site()
@@ -1123,7 +1164,7 @@ def background_last_30_updater():
     while True:
         try:
             get_last_30_codes_cached(force_refresh=True)
-            logger.info("✅ تم تحديث آخر 30 كود تلقائياً (كل 30 ثانية)")
+            logger.info("✅ تم تحديث آخر 30 كود تلقائياً")
         except Exception as e:
             logger.error(f"خطأ التحديث التلقائي: {e}")
         time.sleep(30)
@@ -1185,7 +1226,7 @@ def analyze_last_30_codes():
     return text, sorted_stats
 
 # ═══════════════════════════════════════════════════════════════
-# 📲 دالة بناء رسالة نجاح طلب الرقم (بدون زر آخر 30 كود)
+# 📲 دالة بناء رسالة نجاح طلب الرقم
 # ═══════════════════════════════════════════════════════════════
 def build_number_success_message(service_key, country_name_en, number):
     service_name = DEFAULT_SERVICES.get(service_key, service_key)
@@ -1225,8 +1266,6 @@ def build_number_success_message(service_key, country_name_en, number):
 
     # 5️⃣ اختر خدمة أخرى
     markup.add(InlineKeyboardButton("🔄 اختر خدمة أخرى", callback_data="back_to_services", style="primary"))
-
-    # ⚠️ ملاحظة: زر "آخر 30 كود" مش هنا - مكانه الوحيد في صفحة الدول
 
     return text, markup
 
@@ -1423,7 +1462,10 @@ def debug_cmd(msg):
     for svc_key, svc_api in SERVICE_API_MAP.items():
         countries = np_get_countries(svc_api)
         logger.info(f"🌍 {svc_api}: {len(countries)} دولة")
-    bot.send_message(msg.chat.id, "✅ تم الاختبار، راجع السجلات (logs) لمشاهدة النتائج لكل خدمة.", parse_mode="HTML")
+    # اختبار my_otps
+    otps = np_get_latest_codes()
+    logger.info(f"📥 my_otps: {len(otps)} كود")
+    bot.send_message(msg.chat.id, f"✅ تم الاختبار\n\n📥 my_otps: {len(otps)} كود\n(راجع اللوجز)", parse_mode="HTML")
 
 @bot.message_handler(commands=["numberpanel"])
 def numberpanel_cmd(msg):
@@ -1688,7 +1730,7 @@ def check_sub_now_cb(call):
         bot.answer_callback_query(call.id, "❌ لم تشترك بعد! اشترك أولاً ثم حاول مجدداً.", show_alert=True)
 
 # ═══════════════════════════════════════════════════════════════
-# 🔥 اختيار خدمة
+# 🔥 اختيار خدمة (جلب الدول من الموقع مباشرة)
 # ═══════════════════════════════════════════════════════════════
 @bot.callback_query_handler(func=lambda call: call.data.startswith("service_"))
 def service_selected(call):
@@ -1709,7 +1751,6 @@ def service_selected(call):
         markup = InlineKeyboardMarkup(row_width=1)
         markup.add(InlineKeyboardButton("🔄 حاول تاني", callback_data=f"service_{service_key}", style="success"))
         markup.add(InlineKeyboardButton("🔄 اختر خدمة أخرى", callback_data="back_to_services", style="primary"))
-        # ✨ زر آخر 30 كود (بلون أحمر)
         markup.add(InlineKeyboardButton("📊 آخر 30 كود من الموقع", callback_data="show_last_30_codes", style="danger"))
         markup.add(InlineKeyboardButton("🔗 جروب البوت", url=GROUP_LINK, style="success"))
         bot.edit_message_text(
@@ -1733,7 +1774,7 @@ def service_selected(call):
 
     markup.add(InlineKeyboardButton("🔄 حاول تاني", callback_data=f"service_{service_key}", style="success"))
     markup.add(InlineKeyboardButton("🔄 اختر خدمة أخرى", callback_data="back_to_services", style="primary"))
-    # ✨ زر آخر 30 كود (بلون أحمر) - المكان الوحيد اللي هيظهر فيه
+    # ✨ زر آخر 30 كود (مكانه الوحيد هنا - تحت "اختر خدمة أخرى")
     markup.add(InlineKeyboardButton("📊 آخر 30 كود من الموقع", callback_data="show_last_30_codes", style="danger"))
     markup.add(InlineKeyboardButton("🔗 جروب البوت", url=GROUP_LINK, style="success"))
 
@@ -2191,9 +2232,6 @@ def np_del_number_cb(call):
         bot.answer_callback_query(call.id, "❌")
     np_remove_number_cb(call)
 
-# ═══════════════════════════════════════════════════════════════
-# 🔥 معالج الأزرار القديمة (Copy)
-# ═══════════════════════════════════════════════════════════════
 @bot.callback_query_handler(func=lambda call: call.data.startswith("copy_") and not call.data.startswith("copy_num_"))
 def handle_copy_cb(call):
     otp = call.data.split("_", 1)[1]
@@ -2208,7 +2246,7 @@ if __name__ == "__main__":
     logger.info("🚀 بدء التشغيل...")
 
     Thread(target=np_check_new_code_loop, daemon=True).start()
-    logger.info("✅ فحص الأكواد فوري (كل 5 ثوان)")
+    logger.info("✅ فحص الأكواد شغال (يقرأ من my_otps - كل 5 ثوان)")
 
     Thread(target=background_last_30_updater, daemon=True).start()
     logger.info("⏰ محدّث آخر 30 كود شغال في الخلفية (كل 30 ثانية)")
