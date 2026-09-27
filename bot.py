@@ -45,9 +45,6 @@ if not BOT_TOKEN:
 if MAIN_ADMIN_ID == 0:
     raise ValueError("MAIN_ADMIN_ID غير موجود!")
 
-# ═══════════════════════════════════════════════════════════════
-# 📝 Logging
-# ═══════════════════════════════════════════════════════════════
 os.makedirs("logs", exist_ok=True)
 logging.basicConfig(
     level=logging.INFO,
@@ -131,30 +128,25 @@ SERVICE_ICONS = {
 }
 
 def get_service_icon(service_name):
-    if not service_name:
-        return "🌐"
+    if not service_name: return "🌐"
     s = str(service_name).lower()
     for key, icon in SERVICE_ICONS.items():
-        if key in s:
-            return icon
+        if key in s: return icon
     return "🌐"
 
 def mask_number_partial(number):
     s = re.sub(r'\D', '', str(number))
-    if len(s) <= 6:
-        return s
+    if len(s) <= 6: return s
     return s[:3] + "•" * (len(s) - 6) + s[-3:]
 
 def clean_number(num_str):
-    if num_str is None:
-        return ""
+    if num_str is None: return ""
     return re.sub(r'\D', '', str(num_str))
 
 def auto_delete_message(chat_id, message_id, delay=300):
     def delete():
         time.sleep(delay)
-        try:
-            bot.delete_message(chat_id, message_id)
+        try: bot.delete_message(chat_id, message_id)
         except: pass
     Thread(target=delete, daemon=True).start()
 
@@ -279,15 +271,7 @@ def load_available_cache():
             try:
                 with open(AVAILABLE_COUNTRIES_FILE, "r", encoding="utf-8") as f:
                     available_countries_cache = json.load(f)
-            except:
-                available_countries_cache = {}
-
-def save_available_cache():
-    with available_countries_lock:
-        try:
-            with open(AVAILABLE_COUNTRIES_FILE, "w", encoding="utf-8") as f:
-                json.dump(available_countries_cache, f, indent=2, ensure_ascii=False)
-        except: pass
+            except: available_countries_cache = {}
 
 def load_code_owners():
     with code_owners_lock:
@@ -373,13 +357,9 @@ def save_otp_buttons(buttons):
 
 OTP_BUTTONS = load_otp_buttons()
 
-STATISTICS = {
-    "total_codes": 0, "codes_today": 0, "recent_activations": []
-}
-
+STATISTICS = {"total_codes": 0, "codes_today": 0, "recent_activations": []}
 user_states = {}
 broadcast_state = {}
-
 LAST_30_CODES_CACHE = {"data": [], "last_update": 0, "lock": Lock()}
 
 def is_force_sub_enabled():
@@ -426,58 +406,12 @@ HEADERS = {
     "Accept": "application/json"
 }
 
-# ═══════════════════════════════════════════════════════════════
-# ✨✨✨ دالة الديباج - تطبع شكل الرد من /api/my_otps
-# ═══════════════════════════════════════════════════════════════
-def debug_my_otps_response():
-    """تطبع شكل الرد الحقيقي من /api/my_otps في ملف"""
-    url = f"{NUMBERPANEL_BASE}/my_otps"
-    lines = []
-    lines.append("="*70)
-    lines.append(f"API: {url}")
-    lines.append(f"Time: {datetime.now().isoformat()}")
-    lines.append("="*70)
-    try:
-        r = requests.get(url, params={"limit": 20}, headers=HEADERS, timeout=15)
-        lines.append(f"STATUS CODE: {r.status_code}")
-        lines.append(f"RESPONSE TEXT:")
-        lines.append(r.text)
-        lines.append("")
-        # نحاول نعمل parse ونعرض الشكل
-        try:
-            data = r.json()
-            lines.append("PARSED JSON TYPE: " + type(data).__name__)
-            if isinstance(data, dict):
-                lines.append(f"TOP-LEVEL KEYS: {list(data.keys())}")
-                for k, v in data.items():
-                    lines.append(f"  - {k}: type={type(v).__name__}, value={str(v)[:300]}")
-            elif isinstance(data, list):
-                lines.append(f"LIST LENGTH: {len(data)}")
-                if data:
-                    lines.append(f"FIRST ITEM TYPE: {type(data[0]).__name__}")
-                    lines.append(f"FIRST ITEM: {str(data[0])[:500]}")
-        except Exception as e:
-            lines.append(f"JSON PARSE ERROR: {e}")
-    except Exception as e:
-        lines.append(f"REQUEST ERROR: {e}")
-    lines.append("="*70)
-    
-    content = "\n".join(lines)
-    with open("my_otps_debug.txt", "w", encoding="utf-8") as f:
-        f.write(content)
-    print(content)
-    logger.info("📄 تم حفظ شكل الرد في my_otps_debug.txt")
-
-# ═══════════════════════════════════════════════════════════════
-# API Functions
-# ═══════════════════════════════════════════════════════════════
 def np_get_countries(service_name="WhatsApp"):
     try:
         r = requests.get(f"{NUMBERPANEL_BASE}/countries", params={"service": service_name}, headers=HEADERS, timeout=15)
         if r.status_code == 200:
             return r.json().get("countries", [])
-    except Exception as e:
-        logger.error(f"❌ خطأ: {e}")
+    except: pass
     return []
 
 def np_request_number(service_name, country_name_en):
@@ -510,58 +444,92 @@ def save_np_last_code(data):
                 json.dump(data, f, indent=2, ensure_ascii=False)
         except: pass
 
-# ✨ دالة مرنة جداً - تتعامل مع كل أشكال الرد
+# ═══════════════════════════════════════════════════════════════
+# ✨✨✨ دالة مرنة لقراءة my_otps (تتعامل مع أي شكل)
+# ═══════════════════════════════════════════════════════════════
 def np_get_latest_codes():
-    """قراءة من /api/my_otps - تتعامل مع أي شكل رد"""
+    """قراءة مرنة جداً من /api/my_otps - تتعامل مع أي شكل رد"""
     url = f"{NUMBERPANEL_BASE}/my_otps"
     try:
         r = requests.get(url, params={"limit": 50}, headers=HEADERS, timeout=15)
         if r.status_code != 200:
-            logger.error(f"❌ my_otps HTTP {r.status_code}")
+            logger.error(f"❌ my_otps HTTP {r.status_code}: {r.text[:200]}")
             return []
+        
+        # نطبع الرد الخام في اللوج عشان نشوفه
+        logger.info(f"📥 my_otps raw: {r.text[:600]}")
         
         data = r.json()
         otps_list = None
         
-        # ندور على القائمة في أي مكان
         if isinstance(data, dict):
-            for key in ("otps", "data", "items", "results", "messages", "history", "list"):
+            for key in ("otps", "data", "items", "results", "messages",
+                        "history", "list", "records", "codes"):
                 if key in data and isinstance(data[key], list):
                     otps_list = data[key]
+                    logger.info(f"✅ القائمة موجودة في المفتاح: {key}")
                     break
-            # لو مش لاقيها، ناخد أي قيمة list في الرد
             if otps_list is None:
-                for v in data.values():
+                for k, v in data.items():
                     if isinstance(v, list):
                         otps_list = v
+                        logger.info(f"✅ لقيت list في المفتاح: {k}")
                         break
         elif isinstance(data, list):
             otps_list = data
+            logger.info(f"✅ الرد list مباشرة، عناصره: {len(data)}")
         
         if not otps_list:
+            logger.warning(f"⚠️ مفيش قائمة: {str(data)[:300]}")
             return []
         
         result = []
         for item in otps_list:
             try:
                 if isinstance(item, list) and len(item) >= 3:
-                    # شكل: [service, number, code, ...]
-                    result.append([str(item[0]), str(item[1]), str(item[2]), ""])
+                    svc = str(item[0])
+                    num = str(item[1])
+                    code = str(item[2])
+                    if num and code:
+                        result.append([svc, num, code, ""])
+                        logger.info(f"✅ list item: {svc} | {num} | {code}")
+                
                 elif isinstance(item, dict):
-                    # شكل: {"service": ..., "number": ..., "code": ...}
-                    service = (item.get("service") or item.get("app") or 
-                              item.get("type") or item.get("name") or "WhatsApp")
-                    number = (item.get("number") or item.get("phone") or 
-                             item.get("phone_number") or item.get("to") or "")
-                    code = (item.get("otp") or item.get("code") or 
-                           item.get("otp_code") or item.get("message") or 
-                           item.get("text") or item.get("body") or "")
-                    if number and code:
-                        result.append([str(service), str(number), str(code), ""])
-            except: continue
+                    logger.info(f"📋 item keys: {list(item.keys())}")
+                    
+                    num = ""
+                    for k in ("number", "phone", "phone_number", "to", "msisdn", "recipient"):
+                        if k in item and item[k]:
+                            num = str(item[k])
+                            break
+                    
+                    code = ""
+                    for k in ("otp", "code", "otp_code", "verification_code",
+                             "message", "text", "body", "content", "sms"):
+                        if k in item and item[k]:
+                            val = str(item[k])
+                            digits = re.findall(r'\d+', val)
+                            if digits:
+                                code = max(digits, key=len)
+                            break
+                    
+                    svc = "WhatsApp"
+                    for k in ("service", "app", "type", "name", "site", "provider"):
+                        if k in item and item[k]:
+                            svc = str(item[k])
+                            break
+                    
+                    if num and code:
+                        result.append([svc, num, code, ""])
+                        logger.info(f"✅ dict item: {svc} | {num} | {code}")
+                    else:
+                        logger.warning(f"⚠️ dict ناقص: num={num}, code={code}")
+            except Exception as e:
+                logger.error(f"خطأ في عنصر: {e}")
+                continue
         
         if result:
-            logger.info(f"✅ my_otps: {len(result)} كود")
+            logger.info(f"✅✅ إجمالي: {len(result)} كود")
         return result
     except Exception as e:
         logger.error(f"❌ خطأ my_otps: {e}")
@@ -572,11 +540,9 @@ def np_get_public_codes():
     url = f"{NUMBERPANEL_BASE}/otp?count=200"
     try:
         r = requests.get(url, headers=HEADERS, timeout=15)
-        if r.status_code != 200:
-            return []
+        if r.status_code != 200: return []
         data = r.json()
-        if isinstance(data, list):
-            return data
+        if isinstance(data, list): return data
         return []
     except Exception as e:
         logger.error(f"❌ خطأ البث العام: {e}")
@@ -765,9 +731,6 @@ def update_my_number_last_code(number, code):
             break
     save_my_numbers(numbers)
 
-# ═══════════════════════════════════════════════════════════════
-# 📦 الأكواد المجمعة
-# ═══════════════════════════════════════════════════════════════
 def load_collected_codes():
     global collected_codes
     if os.path.exists(COLLECTED_CODES_FILE):
@@ -782,9 +745,6 @@ def save_collected_codes():
         with open(COLLECTED_CODES_FILE, 'w', encoding='utf-8') as f:
             json.dump(collected_codes, f, indent=2, ensure_ascii=False)
 
-# ═══════════════════════════════════════════════════════════════
-# 🔄 تحميل وحفظ
-# ═══════════════════════════════════════════════════════════════
 def load_data():
     global COUNTRIES, CHANNELS, USERS, ADMINS, BANNED, OTP_GROUP, GROUPS, REFERRALS, NUMBERS_ADMINS
     if os.path.exists(COUNTRIES_FILE):
@@ -898,7 +858,7 @@ def build_group_code_message(number, code_val, service, country, message=""):
 
     return text, markup
 
-# ✅ فحص أكوادنا الخاصة من my_otps
+# ✅ فحص أكوادنا الخاصة من my_otps (كل 3 ثواني)
 def np_check_new_code_loop():
     logger.info("🚀 بدء فحص my_otps (كل 3 ثوان)...")
     time.sleep(3)
@@ -1052,7 +1012,6 @@ def analyze_last_30_codes():
     text += f"\n━━━━━━━━━━━━━━━━━━━━━\n📈 <b>الإجمالي:</b> {total}\n⏰ <b>آخر تحديث:</b> {datetime.now().strftime('%H:%M:%S')}"
     return text, sorted_stats
 
-# رسالة نجاح طلب الرقم
 def build_number_success_message(service_key, country_name_en, number):
     service_name = DEFAULT_SERVICES.get(service_key, service_key)
     service_icon = get_service_icon(service_key)
@@ -1196,9 +1155,6 @@ def get_admin_menu_with_numberpanel():
     markup.add(InlineKeyboardButton("🔙 رجوع", callback_data="back_to_main", style="success"))
     return markup
 
-# ═══════════════════════════════════════════════════════════════
-# 🔒 الاشتراك الإجباري
-# ═══════════════════════════════════════════════════════════════
 def check_force_sub(user_id):
     if not is_force_sub_enabled(): return True
     if not FORCE_SUB_CHANNEL_ID: return True
@@ -1272,13 +1228,11 @@ def debug_cmd(msg):
     bot.reply_to(msg, "⏳ جاري اختبار الاتصال...")
     my_otps = np_get_latest_codes()
     public_otps = np_get_public_codes()
-    # نطبع الشكل الحقيقي في ملف
-    debug_my_otps_response()
     txt = (
         f"✅ نتائج الاختبار:\n\n"
         f"📥 الأكواد الخاصة (my_otps): {len(my_otps)}\n"
         f"🌐 الأكواد العامة (otp): {len(public_otps)}\n\n"
-        f"📄 تم حفظ شكل الرد في ملف my_otps_debug.txt"
+        f"📄 راجع اللوجز لشكل الرد"
     )
     bot.send_message(msg.chat.id, txt, parse_mode="HTML")
 
@@ -1510,7 +1464,7 @@ def back_to_services_cb(call):
     bot.answer_callback_query(call.id, "✅")
 
 # ═══════════════════════════════════════════════════════════════
-# ✅ الاشتراك
+# ✅ التحقق من الاشتراك
 # ═══════════════════════════════════════════════════════════════
 @bot.callback_query_handler(func=lambda call: call.data == "check_sub_now")
 def check_sub_now_cb(call):
@@ -2005,15 +1959,9 @@ if __name__ == "__main__":
     load_available_cache()
     logger.info("🚀 بدء التشغيل...")
 
-    # ✅ اختبار شكل الرد من my_otps أول ما يشتغل
-    logger.info("🔍 اختبار my_otps...")
-    debug_my_otps_response()
-
-    # ✅ الأكواد الخاصة للجروب (my_otps)
     Thread(target=np_check_new_code_loop, daemon=True).start()
     logger.info("✅ فحص my_otps شغال (كل 3 ثوان)")
 
-    # ✅ آخر 30 كود (بث عام)
     Thread(target=background_last_30_updater, daemon=True).start()
     logger.info("⏰ محدّث آخر 30 كود شغال (كل 30 ثانية)")
 
