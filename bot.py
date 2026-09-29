@@ -11,9 +11,6 @@ from phonenumbers import geocoder
 from datetime import datetime, timedelta
 import pycountry
 
-# ═══════════════════════════════════════════════════════════════
-# 🔐 تحميل المتغيرات
-# ═══════════════════════════════════════════════════════════════
 def load_env():
     if os.path.exists('.env'):
         with open('.env', 'r', encoding='utf-8') as f:
@@ -76,9 +73,6 @@ AVAILABLE_COUNTRIES_FILE = "available_countries.json"
 collected_codes = []
 available_countries_cache = {}
 
-# ═══════════════════════════════════════════════════════════════
-# 🌍 جدول أكواد الدول
-# ═══════════════════════════════════════════════════════════════
 COUNTRY_PREFIXES = {
     "IL": "972", "EG": "20", "SA": "966", "AE": "971", "IQ": "964",
     "SY": "963", "RU": "7", "US": "1", "GB": "44", "MA": "212",
@@ -150,9 +144,6 @@ def auto_delete_message(chat_id, message_id, delay=300):
         except: pass
     Thread(target=delete, daemon=True).start()
 
-# ═══════════════════════════════════════════════════════════════
-# 🌍 أسماء الدول
-# ═══════════════════════════════════════════════════════════════
 COUNTRIES_NAMES_AR = {
     "PK": "🇵🇰 باكستان", "HT": "🇭🇹 هايتي", "TG": "🇹🇬 توجو",
     "BF": "🇧🇫 بوركينا فاسو", "LB": "🇱🇧 لبنان", "TZ": "🇹🇿 تنزانيا",
@@ -723,7 +714,7 @@ def load_statistics():
         except: pass
 
 # ═══════════════════════════════════════════════════════════════
-# 🔥 رسالة الجروب (كود فقط - نظيفة)
+# 🔥 رسالة الجروب
 # ═══════════════════════════════════════════════════════════════
 def build_group_code_message(number, code_val, service, country, message=""):
     cleaned = clean_number(number)
@@ -765,74 +756,96 @@ def build_group_code_message(number, code_val, service, country, message=""):
     return text, markup
 
 # ═══════════════════════════════════════════════════════════════
-# ✨✨✨ الحل النهائي: مراقبة Your OTP History (my_otps)
+# ✨✨✨ الحل النهائي: مراقبة Active OTP Phone Numbers
+# من /api/my_numbers - أول ما الحالة Completed → الجروب فوراً
 # ═══════════════════════════════════════════════════════════════
 def np_check_my_numbers_loop():
     """
-    ✅ يراقب قسم "Your OTP History" (my_otps) كل 3 ثواني
-    أي كود جديد يظهر → الجروب فوراً
+    ✅ يراقب Active OTP Phone Numbers من /api/my_numbers
+    أي رقم حالته Completed ويظهر كود → الجروب فوراً
     """
-    logger.info("🎯 بدء مراقبة Your OTP History (my_otps) كل 3 ثواني...")
+    logger.info("🎯 مراقبة Active Numbers (my_numbers) كل 3 ثواني...")
     time.sleep(3)
     while True:
         try:
-            url = f"{NUMBERPANEL_BASE}/my_otps"
+            url = f"{NUMBERPANEL_BASE}/my_numbers"
             try:
-                r = requests.get(url, params={"limit": 50}, headers=HEADERS, timeout=10)
+                r = requests.get(url, headers=HEADERS, timeout=10)
                 if r.status_code != 200:
-                    logger.error(f"❌ my_otps HTTP {r.status_code}")
+                    logger.error(f"❌ my_numbers HTTP {r.status_code}")
                     time.sleep(3)
                     continue
 
                 data = r.json()
-                otps_list = []
+                numbers_list = []
 
                 if isinstance(data, dict):
-                    for key in ("otps", "data", "items", "results", "history", "list", "records", "codes"):
+                    for key in ("numbers", "data", "items", "results", "list", "active_numbers"):
                         if key in data and isinstance(data[key], list):
-                            otps_list = data[key]
+                            numbers_list = data[key]
                             break
-                    if not otps_list:
+                    if not numbers_list:
                         for v in data.values():
                             if isinstance(v, list):
-                                otps_list = v
+                                numbers_list = v
                                 break
                 elif isinstance(data, list):
-                    otps_list = data
+                    numbers_list = data
 
-                if not otps_list:
+                if not numbers_list:
                     time.sleep(3)
                     continue
 
                 last_sent = load_np_last_code()
                 new_count = 0
 
-                for item in otps_list:
+                for item in numbers_list:
                     try:
-                        service = "WhatsApp"
                         number = ""
                         code_val = ""
+                        service = "WhatsApp"
+                        status = ""
 
-                        if isinstance(item, list) and len(item) >= 3:
-                            service = str(item[0])
-                            number = str(item[1])
-                            code_val = str(item[2])
-                        elif isinstance(item, dict):
-                            for k in ("service", "app", "type", "name", "site"):
+                        if isinstance(item, dict):
+                            # الرقم
+                            for k in ("number", "phone", "phone_number"):
                                 if k in item and item[k]:
-                                    service = str(item[k]); break
-                            for k in ("number", "phone", "phone_number", "to", "msisdn"):
+                                    number = str(item[k])
+                                    break
+                            # الكود
+                            for k in ("otp", "code", "otp_code", "latest_otp", "latest_otp_code", "sms_code"):
                                 if k in item and item[k]:
-                                    number = str(item[k]); break
-                            for k in ("otp", "code", "otp_code", "verification_code", "message", "text", "body"):
+                                    code_val = str(item[k])
+                                    break
+                            # الخدمة
+                            for k in ("service", "app", "type"):
                                 if k in item and item[k]:
-                                    val = str(item[k])
-                                    digits = re.findall(r'\d{4,8}', val)
-                                    if digits:
-                                        code_val = digits[0]
+                                    service = str(item[k])
+                                    break
+                            # الحالة
+                            for k in ("status", "state", "condition"):
+                                if k in item and item[k]:
+                                    status = str(item[k]).lower()
                                     break
 
+                        elif isinstance(item, list) and len(item) >= 3:
+                            number = str(item[0])
+                            code_val = str(item[1]) if len(item) > 1 else ""
+                            service = str(item[2]) if len(item) > 2 else "WhatsApp"
+                            status = "completed"
+
                         if not number or not code_val:
+                            continue
+
+                        # لازم الحالة completed
+                        if status and status not in ("completed", "complete", "done", "success"):
+                            continue
+
+                        # نتحقق إن الكود فعلاً أرقام
+                        digits = re.findall(r'\d{3,8}', code_val)
+                        if digits:
+                            code_val = digits[0]
+                        else:
                             continue
 
                         cleaned = clean_number(number)
@@ -844,8 +857,7 @@ def np_check_my_numbers_loop():
                             continue
 
                         country_name, flag, region = detect_country_from_number(cleaned)
-
-                        logger.info(f"🎯 كود جديد: {code_val} للرقم {cleaned} - {region}")
+                        logger.info(f"🎯 كود جديد: {code_val} للرقم {cleaned} - {region} ({status})")
 
                         text, markup = build_group_code_message(
                             number=cleaned, code_val=code_val,
@@ -860,7 +872,7 @@ def np_check_my_numbers_loop():
                                 sent = True
                                 logger.info(f"✅ تم إرسال {code_val} للجروب")
                             except Exception as e:
-                                logger.error(f"خطأ: {e}")
+                                logger.error(f"خطأ إرسال: {e}")
 
                         for gid in list(GROUPS):
                             if gid != OTP_GROUP:
@@ -904,7 +916,7 @@ def np_check_my_numbers_loop():
                     logger.info(f"⚡ اللفة: {new_count} كود جديد")
 
             except Exception as e:
-                logger.error(f"❌ خطأ my_otps: {e}")
+                logger.error(f"❌ خطأ my_numbers: {e}")
 
         except Exception as e:
             logger.error(f"❌ خطأ: {e}")
@@ -1199,19 +1211,18 @@ def start(msg):
 def debug_cmd(msg):
     if msg.from_user.id != MAIN_ADMIN_ID: return
     bot.reply_to(msg, "⏳ جاري اختبار الاتصال...")
-    # اختبار my_otps
-    test_url = f"{NUMBERPANEL_BASE}/my_otps"
+    # اختبار my_numbers
     test_result = ""
     try:
-        r = requests.get(test_url, params={"limit": 10}, headers=HEADERS, timeout=10)
-        test_result = f"HTTP {r.status_code}\n{str(r.text)[:300]}"
+        r = requests.get(f"{NUMBERPANEL_BASE}/my_numbers", headers=HEADERS, timeout=10)
+        test_result = f"HTTP {r.status_code}\n{str(r.text)[:400]}"
     except Exception as e:
         test_result = f"خطأ: {e}"
     public_otps = np_get_public_codes()
     numbers = load_my_numbers()
     txt = (
         f"✅ نتائج الاختبار:\n\n"
-        f"📥 my_otps:\n<code>{test_result}</code>\n\n"
+        f"📥 my_numbers:\n<code>{test_result}</code>\n\n"
         f"🌐 البث العام: {len(public_otps)} كود\n"
         f"📱 عدد أرقامك: {len(numbers)}"
     )
@@ -1940,9 +1951,9 @@ if __name__ == "__main__":
     load_available_cache()
     logger.info("🚀 بدء التشغيل...")
 
-    # ✅✨✨ الحل النهائي: مراقبة Your OTP History (my_otps) كل 3 ثواني
+    # ✅✨✨ الحل النهائي: مراقبة Active Numbers (my_numbers) كل 3 ثواني
     Thread(target=np_check_my_numbers_loop, daemon=True).start()
-    logger.info("🎯 مراقبة Your OTP History شغالة (كل 3 ثوان) ✅")
+    logger.info("🎯 مراقبة Active Numbers شغالة (كل 3 ثوان) ✅")
 
     # ✅ آخر 30 كود من البث العام
     Thread(target=background_last_30_updater, daemon=True).start()
