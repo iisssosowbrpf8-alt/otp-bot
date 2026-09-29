@@ -470,6 +470,7 @@ def find_number_for_country(country_name_en, service_key, user_id):
             return True, cleaned, "تم الطلب بنجاح"
         return False, None, "الرقم مستخدم قبل كده"
     return False, None, result
+    
 
 # ═══════════════════════════════════════════════════════════════
 # 💰 نظام الإحالات والرصيد
@@ -726,14 +727,24 @@ def load_statistics():
         except: pass
 
 # ═══════════════════════════════════════════════════════════════
-# 🔥 رسالة الجروب
+# 🔥 رسالة الجروب (✨ بعد التنظيف - نسخة جديدة)
 # ═══════════════════════════════════════════════════════════════
 def build_group_code_message(number, code_val, service, country, message=""):
+    """✨ بعد التنظيف: نشيل أي رموز تكسر تليجرام"""
     cleaned = clean_number(number)
     masked = mask_number_partial(cleaned)
+    
+    # ✨ تنظيف الكود من أي رموز تكسر تليجرام
+    code_val_clean = str(code_val).replace("<", "").replace(">", "").replace("&", "").replace("#", "").strip()
+    if not code_val_clean:
+        code_val_clean = str(code_val).strip()
+    
     service_icon = get_service_icon(service)
     flag = get_flag(country) if country else "🌍"
+    
+    # ✨ تنظيف اسم الخدمة
     service_display = DEFAULT_SERVICES.get(service.lower() if service else "", service or "غير معروفة")
+    service_display = str(service_display).replace("<", "").replace(">", "").replace("&", "").replace("#", "")
 
     text = (
         f"{service_icon} <b>كود جديد</b>\n"
@@ -741,15 +752,15 @@ def build_group_code_message(number, code_val, service, country, message=""):
         f"🌍 <b>الدولة:</b> {flag}\n"
         f"📱 <b>الخدمة:</b> {service_display}\n"
         f"📵 <b>الرقم:</b> <code>{masked}</code>\n"
-        f"🔑 <b>الكود:</b> <code>{code_val}</code>\n"
+        f"🔑 <b>الكود:</b> <code>{code_val_clean}</code>\n"
         f"🕐 <b>الوقت:</b> {datetime.now().strftime('%H:%M:%S')}"
     )
 
     markup = InlineKeyboardMarkup(row_width=1)
     try:
         markup.add(InlineKeyboardButton(
-            text=f"📋 نسخ الكود: {code_val}",
-            copy_text=CopyTextButton(text=str(code_val)),
+            text=f"📋 نسخ الكود: {code_val_clean}",
+            copy_text=CopyTextButton(text=str(code_val_clean)),
             style="success"
         ))
     except: pass
@@ -768,13 +779,13 @@ def build_group_code_message(number, code_val, service, country, message=""):
     return text, markup
 
 # ═══════════════════════════════════════════════════════════════
-# ✅✅✅ الحل النهائي: مراقبة /api/my_otps
-# نقرأ الحقل otp_code الصحيح من الرد
+# ✨✨✨ الحل النهائي: مراقبة /api/my_otps
+# مع تنظيف الأخطاء عشان البوت ما يقعش
 # ═══════════════════════════════════════════════════════════════
 def np_check_my_numbers_loop():
     """
-    ✅ يراقب /api/my_otps - سجل الأكواد الخاصة بحسابنا
-    كل 3 ثواني يجيب آخر 30 كود ويعرض الجديد منها
+    ✅ يراقب /api/my_otps كل 3 ثواني
+    مع fallback عشان البوت ما يقعش لو الرسالة فيها رموز غريبة
     """
     logger.info("🎯 مراقبة /api/my_otps (كل 3 ثواني)...")
     time.sleep(3)
@@ -784,7 +795,6 @@ def np_check_my_numbers_loop():
             try:
                 r = requests.get(url, params={"limit": 30}, headers=HEADERS, timeout=10)
                 if r.status_code != 200:
-                    logger.error(f"❌ my_otps HTTP {r.status_code}")
                     time.sleep(3)
                     continue
 
@@ -819,7 +829,6 @@ def np_check_my_numbers_loop():
                         if unique_key in last_sent:
                             continue
 
-                        # نستخدم country من الرد لو موجود
                         if country:
                             region = country
                         else:
@@ -840,7 +849,16 @@ def np_check_my_numbers_loop():
                                 sent = True
                                 logger.info(f"✅ تم إرسال {code_val} للجروب")
                             except Exception as e:
-                                logger.error(f"خطأ إرسال: {e}")
+                                logger.error(f"خطأ إرسال HTML: {e}")
+                                # ✨ fallback: نبعت بدون HTML
+                                try:
+                                    plain_text = f"🔑 كود جديد: {code_val}\n📵 الرقم: +{cleaned}\n🌍 الدولة: {region}"
+                                    msg = bot.send_message(OTP_GROUP, plain_text, reply_markup=markup)
+                                    auto_delete_message(OTP_GROUP, msg.message_id, delay=300)
+                                    sent = True
+                                    logger.info(f"✅ تم إرسال {code_val} بدون HTML")
+                                except Exception as e2:
+                                    logger.error(f"خطأ fallback: {e2}")
 
                         for gid in list(GROUPS):
                             if gid != OTP_GROUP:
@@ -848,7 +866,13 @@ def np_check_my_numbers_loop():
                                     msg = bot.send_message(gid, text, parse_mode="HTML", reply_markup=markup)
                                     auto_delete_message(gid, msg.message_id, delay=300)
                                     sent = True
-                                except: pass
+                                except:
+                                    try:
+                                        plain_text = f"🔑 كود جديد: {code_val}\n📵 الرقم: +{cleaned}\n🌍 الدولة: {region}"
+                                        msg = bot.send_message(gid, plain_text, reply_markup=markup)
+                                        auto_delete_message(gid, msg.message_id, delay=300)
+                                        sent = True
+                                    except: pass
 
                         if sent:
                             last_sent[unique_key] = datetime.now().isoformat()
@@ -993,6 +1017,7 @@ def build_number_success_message(service_key, country_name_en, number):
     markup.add(InlineKeyboardButton("🔄 اختر خدمة أخرى", callback_data="back_to_services", style="primary"))
 
     return text, markup
+    
 
 # ═══════════════════════════════════════════════════════════════
 # 📲 الأزرار الرئيسية
@@ -1182,11 +1207,20 @@ def debug_cmd(msg):
     test_result = ""
     try:
         r = requests.get(f"{NUMBERPANEL_BASE}/my_otps", params={"limit": 5}, headers=HEADERS, timeout=10)
-        test_result = f"HTTP {r.status_code}\n{str(r.text)[:400]}"
+        raw_text = r.text[:400]
+        raw_text = raw_text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+        test_result = f"HTTP {r.status_code}\n{raw_text}"
     except Exception as e:
         test_result = f"خطأ: {e}"
-    txt = f"✅ نتائج الاختبار:\n\n📥 my_otps:\n<code>{test_result}</code>"
-    bot.send_message(msg.chat.id, txt, parse_mode="HTML")
+    
+    txt = f"✅ <b>نتائج الاختبار:</b>\n\n📥 <b>my_otps:</b>\n<code>{test_result}</code>"
+    try:
+        bot.send_message(msg.chat.id, txt, parse_mode="HTML")
+    except:
+        try:
+            bot.send_message(msg.chat.id, f"نتائج الاختبار:\n\nmy_otps:\n{test_result}")
+        except Exception as e2:
+            bot.send_message(msg.chat.id, f"فشل: {e2}")
 
 @bot.message_handler(commands=["numberpanel"])
 def numberpanel_cmd(msg):
@@ -1398,6 +1432,7 @@ def handle_messages(msg):
             txt += f"{i}. {get_country_flags_final(name)} {name} ➡️ {pct:.1f}%\n"
         bot.send_message(msg.chat.id, txt, parse_mode="HTML")
         return
+        
 
 # ═══════════════════════════════════════════════════════════════
 # 🔄 رجوع للخدمات
